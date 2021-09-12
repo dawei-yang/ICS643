@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <sys/time.h>
 
 void printArray(int rowSize, int colSize, int array[rowSize][rowSize]);
+struct timeval start, end;
 
 int main(int argc, char *argv[]) {
     if(argc != 2) {
@@ -22,6 +24,7 @@ int main(int argc, char *argv[]) {
     int colSize = atoi(argv[1]);
     int arrayA[rowSize][colSize]; */
 
+    
     int N = atoi(argv[1]);
     double *arrayA = (double *)malloc(N * N * sizeof(double));
     double *arrayB = (double *)malloc(N * N * sizeof(double));
@@ -33,7 +36,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    printf("Array A: \n");
+/*     printf("Array A: \n");
     for(int k = 0; k < N*N; k++) {
         printf("%lf ", arrayA[k]);
     }
@@ -43,12 +46,21 @@ int main(int argc, char *argv[]) {
     }
     printf("\n");
 
-/*     for(int i = 0; i < 5; i++) {
-        for(int j = 0; j < 5; j++) {
-            arrayA[i][j] = i + j;
+    printf("================================================================"); */
+    gettimeofday(&start, NULL);
+    for(int i = 0; i < N; i++) {
+        for(int j = 0; j < N; j++) {
+            arrayA[N * i + j] = arrayA[N * i + j] + arrayB[N * i + j];
         }
     }
-    printArray(rowSize, colSize, arrayA); */
+    gettimeofday(&end, NULL);
+    double elapsed_time = (10.0E+6 * (end.tv_sec - start.tv_sec) + end.tv_usec - start.tv_usec) / 10.0E+6;
+    printf("Elapsed Time: %lf\n", elapsed_time);
+/*     printf("new Array A: \n");
+    for(int k = 0; k < N*N; k++) {
+        printf("%lf ", arrayA[k]);
+    } */
+
     return 0;
 }
 
