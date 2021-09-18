@@ -37,7 +37,6 @@ int main(int argc, char *argv[]) {
         for(int j=0; j<N; j+=B) {
             for(int k=0; k<B; k++) {
                 for(int l=0; l<B; l++) {
-                    // arrayD[(N*i+j) + (k*N) + l] = arrayA[(N*i+j) + (k*N) + l]   + arrayB[(N*i+j) + (k*N) + l] ;
                     arrayA[(N*i+j) + (k*N) + l] += arrayB[(N*i+j) + (k*N) + l];
                 }
             }

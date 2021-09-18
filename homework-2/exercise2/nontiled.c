@@ -26,21 +26,16 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    // calculate
     gettimeofday(&start, NULL);
     for(int i = 0; i < N; i++) {
         for(int j = 0; j < N; j++) {
             arrayA[N * i + j] += arrayB[N * i + j];
-            // arrayA[N * i + j] +=  arrayB[N * j + i];
-
         }
     }
     gettimeofday(&end, NULL);
+
     double elapsed_time = (10.0E+6 * (end.tv_sec - start.tv_sec) + end.tv_usec - start.tv_usec) / 10.0E+6;
     printf("%lf\n", elapsed_time);
-
-    /* for(int i = 0; i < N*N; i++) {
-        printf("%lf\t", arrayA[i]);
-    } */
-
     return 0;
 }
