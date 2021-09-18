@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <sys/time.h>
+#include <stdbool.h>
 
 struct timeval start, end;
 
@@ -10,33 +11,54 @@ int main(int argc, char *argv[]) {
         printf("Usage: ./tiled <array size> <tile size>\n");
         return -1;
     }
-    if(isdigit(atoi(argv[1])) != 0 || atoi(argv[1]) <= 0) {
-        printf("Invalid N argument \"%s\"\n", argv[1]);
-        return -1;
+    int p;
+    bool flagA = true;
+    bool flagB = true;
+    if(argv[1][0] == '-') {
+ 	    printf("Invalid N argument \"%s\"\n", argv[1]);
+        flagA = false;
+    } else {
+        for(p=0; argv[1][p] != 0; p++) {
+            if (!isdigit(argv[1][p])) {
+                printf("Invalid N argument \"%s\"\n", argv[1]);
+                flagA = false;
+                break;
+            }
+        }
     }
-    if(isdigit(isdigit(atoi(argv[2]))) != 0  || atoi(argv[2]) <= 0 ) {
-        printf("Invalid B argument \"%s\"\n", argv[2]);
-        return -1;
+    if(argv[2][0] == '-') {
+ 	    printf("Invalid B argument \"%s\"\n", argv[2]);
+   	    flagB = false;
+    } else {
+        for(p=0; argv[2][p] != 0; p++) {
+            if (!isdigit(argv[2][p])) {
+                printf("Invalid B argument \"%s\"\n", argv[2]);
+                flagB = false;
+                break;
+            }
+        }
     }
+    if(flagA == false || flagB == false) return -1;
+
     int N = atoi(argv[1]);
     int B = atoi(argv[2]);
     double *arrayA = (double *)malloc(N * N * sizeof(double));
     double *arrayB = (double *)malloc(N * N * sizeof(double));
 
     // initialize the Arrays
-    for(int i = 0; i < N; i++) {
-        for(int j = 0; j < N; j++) {
+    int i, j, k, l;
+    for(i = 0; i < N; i++) {
+        for(j = 0; j < N; j++) {
             arrayA[N * i + j] = (double)(i + j);
             arrayB[N * i + j] = (double)(rand());
         }
     }
-
     // calculate
     gettimeofday(&start, NULL);
-    for(int i=0; i<N; i+=B) {
-        for(int j=0; j<N; j+=B) {
-            for(int k=0; k<B; k++) {
-                for(int l=0; l<B; l++) {
+    for(i=0; i<N; i+=B) {
+        for(j=0; j<N; j+=B) {
+            for(k=0; k<B; k++) {
+                for(l=0; l<B; l++) {
                     arrayA[(N*i+j) + (k*N) + l] += arrayB[(N*i+j) + (k*N) + l];
                 }
             }

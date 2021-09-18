@@ -10,17 +10,28 @@ int main(int argc, char *argv[]) {
         printf("Usage: ./nontiled <N>\n");
         return -1;
     }
-    if(isdigit(atoi(argv[1])) != 0 || atoi(argv[1]) <= 0) {
-        printf("Invalid N argument \"%s\"\n", argv[1]);
-        return -1;
+
+
+    int p = 0;
+    if (argv[1][0] == '-') {
+ 	    printf("Invalid N argument \"%s\"\n", argv[1]);
+   	    return -1;
     }
+    for(; argv[1][p] != 0; p++) {
+        if (!isdigit(argv[1][p])) {
+	        printf("Invalid N argument \"%s\"\n", argv[1]);
+            return -1;
+	    }
+    }
+
     
     int N = atoi(argv[1]);
     double *arrayA = (double *)malloc(N * N * sizeof(double));
     double *arrayB = (double *)malloc(N * N * sizeof(double));
+    int i, j;
 
-    for(int i = 0; i < N; i++) {
-        for(int j = 0; j < N; j++) {
+    for(i = 0; i < N; i++) {
+        for(j = 0; j < N; j++) {
             arrayA[N * i + j] = (double)(i + j);
             arrayB[N * i + j] = (double)(rand());
         }
@@ -28,8 +39,8 @@ int main(int argc, char *argv[]) {
 
     // calculate
     gettimeofday(&start, NULL);
-    for(int i = 0; i < N; i++) {
-        for(int j = 0; j < N; j++) {
+    for(i = 0; i < N; i++) {
+        for(j = 0; j < N; j++) {
             arrayA[N * i + j] += arrayB[N * i + j];
         }
     }
