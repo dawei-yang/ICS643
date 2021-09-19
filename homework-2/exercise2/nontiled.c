@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
     gettimeofday(&start, NULL);
     for(i = 0; i < N; i++) {
         for(j = 0; j < N; j++) {
-            arrayA[N * i + j] += arrayB[N * i + j];
+            arrayA[N * i + j] += arrayB[N * j + i];
         }
     }
     gettimeofday(&end, NULL);

@@ -53,19 +53,20 @@ int main(int argc, char *argv[]) {
             arrayB[N * i + j] = (double)(rand());
         }
     }
+
     // calculate
     gettimeofday(&start, NULL);
     for(i=0; i<N; i+=B) {
         for(j=0; j<N; j+=B) {
             for(k=0; k<B; k++) {
                 for(l=0; l<B; l++) {
-                    arrayA[(N*i+j) + (k*N) + l] += arrayB[(N*i+j) + (k*N) + l];
+                    arrayA[(N*i+j) + (k*N) + l] += arrayB[(N*j+i) + (l*N) + k];
                 }
             }
         }
     }
     gettimeofday(&end, NULL);
-    
+
     double elapsed_time = (10.0E+6 * (end.tv_sec - start.tv_sec) + end.tv_usec - start.tv_usec) / 10.0E+6;
     printf("%lf\n", elapsed_time);
     return 0;
