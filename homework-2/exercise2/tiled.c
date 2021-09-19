@@ -56,10 +56,10 @@ int main(int argc, char *argv[]) {
 
     // calculate
     gettimeofday(&start, NULL);
-    for(i=0; i<N; i+=B) {
-        for(j=0; j<N; j+=B) {
-            for(k=0; k<B; k++) {
-                for(l=0; l<B; l++) {
+    for(i=0; i<N; i+=(B>(N-i)? N%B : B)) {
+        for(j=0; j<N; j+=(B>(N-j)? N%B: B)) {
+            for(k=0; k<(B>(N-i)? N%B : B); k++) {
+                for(l=0; l<(B>(N-j)? N%B : B); l++) {
                     arrayA[(N*i+j) + (k*N) + l] += arrayB[(N*j+i) + (l*N) + k];
                 }
             }
