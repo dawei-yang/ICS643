@@ -4,9 +4,9 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sys/time.h>
-// #include <omp.h>
+#include <omp.h>
 
-void updateTile(int start_i, int start_j, int end_i, int end_j, int size);
+
 /* Convenient macro to access array element */
 #define ARRAY(x,y) A[(x)*(N+2)+(y)]
 /* Convenient macro to compute array element update */
@@ -40,7 +40,6 @@ int main(int argc, char **argv) {
   // Allocate (N+2)x(N+2) array
   double *A = (double *)malloc((N+2) * (N+2) * sizeof(double));
 
-
   #ifdef CHECK
   double *B = (double *)malloc((N+2) * (N+2) * sizeof(double));
   #endif
@@ -59,51 +58,44 @@ int main(int argc, char **argv) {
 
   // Loop for num_iterations iterations
   fprintf(stderr,"Computing all iterations...\n");
-  // omp_set_num_threads(num_threads);
+  omp_set_num_threads(num_threads);
   struct timeval begin, end;
   gettimeofday(&begin, NULL);
   
-  
-  int size_of_tile = 5;
-  for(int k = 1 ; k < N * 2 ; k+=size_of_tile) {
-      printf("Parallel tiles\n");
-      for( int j = 1 ; j <= k ; j+=size_of_tile) {
+  int size_of_tile = 200;
+  for (int iter = 0; iter < num_iterations; iter++) {
+    for(int k = 1 ; k < N * 2 ; k+=size_of_tile) {
+      // Parallel for tiles anti-diagonal
+      #pragma omp parallel for
+        for( int j = 1 ; j <= k ; j+=size_of_tile) {
           int i = k - j + 1;
           if( i < N && j < N ) {
-            // printf("start at (%d, %d), end at (%d, %d)\n", i, j, i+ size_of_tile -1, j+ size_of_tile -1);
-            updateTile(i, j, i+size_of_tile-1, j+size_of_tile-1, size_of_tile);
+            // Parallel each tiles anti-diagonal
+            int start_i = i;
+            int start_j = j;
+            int end_i = i+size_of_tile -1;
+            int end_j = j+size_of_tile -1;
+            for(int j = start_j; j <= end_j; j++) {
+              #pragma omp parallel for
+              for(int m = j; m >= start_j; m--) {
+                for(int n=(start_i+j-m); n<(start_i+j+1-m); n++) {
+                  ARRAY(n, m) = UPDATE(n, m);
+                }
+              }
+            }
+            for(int j = start_j+1; j <= end_j; j++) {
+              #pragma omp parallel for
+              for(int m = j; m<=end_j; m++) {
+                for(int n= (end_i+j-m); n<(end_i+j-m+1); n++) {
+                  ARRAY(n, m) = UPDATE(n, m);
+                }
+              }
+            }
           }
-      }
+        }
+    }
   }
-
-
-
-/*   for (int iter = 0; iter < num_iterations; iter++) {
-    ARRAY(1, 1) = UPDATE(1, 1);
-    int m, n;
-    for(int j = 2; j <= N+1; j++) {
-      #pragma omp parallel for
-      for(m = j; m >=1; m--) {
-        for(n=(j+1-m); n<(j+2-m); n++) {
-          //printf("[%d, %d]\n", m, n);
-          ARRAY(m, n) = UPDATE(m, n);
-        }
-      }
-    }
-    for(int j = 2; j <= N+1; j++) {
-      #pragma omp parallel for
-      for(m = j; m<=(N+1); m++) {
-        for(n= (N+1+j-m); n<(N+2+j-m); n++) {
-          ARRAY(m, n) = UPDATE(m, n);
-          //printf("[%d, %d]\n", m, n);
-        }
-      }
-    }
-  } */
-
   gettimeofday(&end, NULL);
-
-
 
 
   #ifdef CHECK
@@ -131,34 +123,9 @@ int main(int argc, char **argv) {
       checksum += ARRAYB(p, q);
     }
   }
-
   fprintf(stdout, "Sequential Checksum: %.10f\n",checksum);
   fprintf(stdout, "Parallel Checksum:   %.10f\n", checksum_reg);
   #endif
 
   exit(0);
-}
-
-void updateTile(int start_i, int start_j, int end_i, int end_j, int size) {
-    int m, n;
-    printf("Update (%d, %d)\n", start_i, start_j);
-  
-    for(int j = start_j; j <= end_j; j++) {
-
-      for(int m = j; m >= start_j; m--) {
-         for(int n=(start_i+j-m); n<(start_i+j+1-m); n++) {
-          ARRAY(n, m) = UPDATE(n, m);
-          // printf("[%d, %d]\n", n, m);
-        }
-        printf("\n\n");
-      }
-    }
-    for(int j = start_j+1; j <= end_j; j++) {
-      for(int m = j; m<=end_j; m++) {
-        for(int n= (end_i+j-m); n<(end_i+j-m+1); n++) {
-          ARRAY(n, m) = UPDATE(n, m);
-          // printf("[%d, %d]\n", n, m);
-        }
-      }
-    }
 }
