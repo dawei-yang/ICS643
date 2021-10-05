@@ -6,19 +6,16 @@
 #include <sys/time.h>
 #include <omp.h>
 
-
+#define TILESIZE 200
 /* Convenient macro to access array element */
 #define ARRAY(x,y) A[(x)*(N+2)+(y)]
 /* Convenient macro to compute array element update */
 #define UPDATE(x,y) ((ARRAY(x,y) + ARRAY(x-1,y) + ARRAY(x,y-1))/3.0);
-
 /* Array B for -DCHECK */
 #ifdef CHECK
 #define ARRAYB(x,y) B[(x)*(N+2)+(y)]
 #define UPDATEB(x,y) ((ARRAYB(x,y) + ARRAYB(x-1,y) + ARRAYB(x,y-1))/3.0);
 #endif
-
-
 
 int main(int argc, char **argv) {
 
@@ -43,6 +40,7 @@ int main(int argc, char **argv) {
   #ifdef CHECK
   double *B = (double *)malloc((N+2) * (N+2) * sizeof(double));
   #endif
+
   // Array initialization
   fprintf(stderr,"Array initialization...\n");
   srand(42);
@@ -62,33 +60,22 @@ int main(int argc, char **argv) {
   struct timeval begin, end;
   gettimeofday(&begin, NULL);
   
-  int size_of_tile = 200;
-  for (int iter = 0; iter < num_iterations; iter++) {
-    for(int k = 1 ; k < N * 2 ; k+=size_of_tile) {
+  for (int iter=0; iter<num_iterations; iter++) {
+    for(int k=1 ; k<N*2; k+=TILESIZE) {
       // Parallel for tiles anti-diagonal
       #pragma omp parallel for
-        for(int index = 1; index<= k ; index+=size_of_tile) {
-          int i = k - index + 1;
-          if( i < N && index < N ) {
-            // Parallel each tiles anti-diagonal
-            int start_i = i;
-            int start_j = index;
-            int end_i = i+size_of_tile -1;
-            int end_j = index+size_of_tile -1;
-            for(int j = start_j; j <= end_j; j++) {
-//              #pragma omp parallel for
-              for(int m = j; m >= start_j; m--) {
-                for(int n=(start_i+j-m); n<(start_i+j+1-m); n++) {
-                  ARRAY(n, m) = UPDATE(n, m);
-                }
-              }
-            }
-            for(int index = start_j+1; index<=end_j; index++) {
- //             #pragma omp parallel for
-              for(int m = index; m<=end_j; m++) {
-                for(int n= (end_i+index-m); n<(end_i+index-m+1); n++) {
-                  ARRAY(n, m) = UPDATE(n, m);
-                }
+        for(int index=1; index<=k; index+=TILESIZE) {
+          int i = k-index+1;
+          if(i<=N && index<=N) {
+            int remain_i = N+1-i;
+            int remain_j = N+1-index;
+            int end_i = (TILESIZE < remain_i ? i+TILESIZE : i+remain_i);
+            int end_j = (TILESIZE < remain_j ? index+TILESIZE : index+remain_j);
+
+            for (int p=i; p<end_i; p++) {
+              for (int q=index; q<end_j; q++) {
+                ARRAY(p,q) = UPDATE(p,q);
+                // printf("[%d, %d]\n", p, q);
               }
             }
           }
@@ -97,35 +84,31 @@ int main(int argc, char **argv) {
   }
   gettimeofday(&end, NULL);
 
-
   #ifdef CHECK
-  for (int iter = 0; iter < num_iterations; iter++) {
-    for (int p = 1; p < N+1; p++) {
-      for (int q = 1; q < N+1; q++) {
+  for (int iter=0; iter<num_iterations; iter++) {
+    for (int p=1; p<N+1; p++) {
+      for (int q=1; q<N+1; q++) {
           ARRAYB(p, q) = UPDATEB(p, q);
       }
     }
   }
-  #endif  
-
-  double elapsed = (1.0E+6 * (end.tv_sec - begin.tv_sec) + end.tv_usec -  begin.tv_usec) / 1.0E+6;
-  fprintf(stdout, "%.2lf\n", elapsed);
-
   // Compute and print the sum of elements for 
   // correctness checking (may overflow, whatever)
-  #ifdef CHECK
   double checksum =0;
   double checksum_reg = 0;
 
-  for (int p=1; p < N+1; p++) {
-    for (int q=1; q < N+1; q++) {
+  for (int p=1; p<N+1; p++) {
+    for (int q=1; q<N+1; q++) {
       checksum_reg += ARRAY(p, q);
       checksum += ARRAYB(p, q);
     }
   }
   fprintf(stderr, "Sequential Checksum: %.10f\n",checksum);
   fprintf(stderr, "Parallel Checksum:   %.10f\n", checksum_reg);
+  fprintf(stderr, "Two checksum equal?  %d\n", checksum_reg == checksum);
   #endif
 
+  double elapsed = (1.0E+6 * (end.tv_sec - begin.tv_sec) + end.tv_usec -  begin.tv_usec) / 1.0E+6;
+  fprintf(stdout, "%.2lf\n", elapsed);
   exit(0);
 }

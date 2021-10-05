@@ -1,0 +1,216 @@
+Exercise #1: Parallelizing Matrix Multiplication
+
+Question 1:
+trail [0] elapsed => 24.00
+trail [1] elapsed => 24.08
+trail [2] elapsed => 24.06
+trail [3] elapsed => 24.03
+trail [4] elapsed => 24.16
+trail [5] elapsed => 24.04
+trail [6] elapsed => 24.13
+trail [7] elapsed => 24.03
+trail [8] elapsed => 24.10
+trail [9] elapsed => 24.07
+
+avg elasped time: 24.07
+Min: 24.00
+Max:24.16
+
+Question2:
+
+Parallel k loop leads to race condition. ()
+
+
+
+Question 3
+
+PARALLEL I:
+
+Average elasped time is 13.916999999999998 @ Threads = 2
+Min: 13.56  .   Max: 14.42
+Average elasped time is 9.377999999999998 @ Threads = 3 
+Min: 9.09  .   Max: 9.72
+Average elasped time is 7.281000000000001 @ Threads = 4 
+Min: 6.98  .   Max: 7.5
+Average elasped time is 5.899 @ Threads = 5 
+Min: 5.81  .   Max: 6.07
+Average elasped time is 5.084 @ Threads = 6 
+Min: 5.01  .   Max: 5.23
+Average elasped time is 4.3870000000000005 @ Threads = 7 
+Min: 4.24  .   Max: 4.57
+Average elasped time is 3.9450000000000003 @ Threads = 8 
+Min: 3.83  .   Max: 4.16
+Average elasped time is 3.5840000000000005 @ Threads = 9 
+Min: 3.45  .   Max: 3.74
+Average elasped time is 3.2389999999999994 @ Threads = 10 
+Min: 3.18  .   Max: 3.31
+Average elasped time is 2.9769999999999994 @ Threads = 11 
+Min: 2.88  .   Max: 3.07
+Average elasped time is 2.786 @ Threads = 12
+Min: 2.73  .   Max: 2.88
+Average elasped time is 2.6069999999999998 @ Threads = 13
+Min: 2.55  .   Max: 2.65
+Average elasped time is 2.457 @ Threads = 14 
+Min: 2.39  .   Max: 2.55
+Average elasped time is 2.31 @ Threads = 15 
+Min: 2.24  .   Max: 2.48
+Average elasped time is 2.2359999999999998 @ Threads = 16
+Min: 2.06  .   Max: 2.46
+Average elasped time is 2.1670000000000003 @ Threads = 17
+Min: 2.08  .   Max: 2.26
+Average elasped time is 2.1180000000000003 @ Threads = 18
+Min: 2.05  .   Max: 2.18
+Average elasped time is 2.1149999999999998 @ Threads = 19
+Min: 1.95  .   Max: 2.6
+
+PARALLEL K:
+Average elasped time is 25.089000000000002 @ Threads = 2
+Min: 24.67  .   Max: 25.33
+Average elasped time is 33.76199999999999 @ Threads = 3 
+Min: 30.59  .   Max: 36.7
+Average elasped time is 39.73100000000001 @ Threads = 4
+Min: 36.89  .   Max: 42.92
+Average elasped time is 43.372 @ Threads = 5
+Min: 37.55  .   Max: 48.98
+Average elasped time is 43.617000000000004 @ Threads = 6
+Min: 32.84  .   Max: 50.29
+Average elasped time is 42.03 @ Threads = 7
+Min: 39.89  .   Max: 45.26
+Average elasped time is 40.361 @ Threads = 8
+Min: 39.15  .   Max: 41.93
+Average elasped time is 35.452999999999996 @ Threads = 9 
+Min: 33.45  .   Max: 38.34
+Average elasped time is 36.690999999999995 @ Threads = 10 
+Min: 34.7  .   Max: 37.08
+Average elasped time is 32.928 @ Threads = 11 
+Min: 31.14  .   Max: 34.1
+Average elasped time is 31.325 @ Threads = 12
+Min: 30.97  .   Max: 31.59
+Average elasped time is 29.563 @ Threads = 13
+Min: 28.65  .   Max: 29.96
+Average elasped time is 28.474 @ Threads = 14
+Min: 28.11  .   Max: 28.97
+Average elasped time is 27.413999999999998 @ Threads = 15
+Min: 26.83  .   Max: 27.96
+Average elasped time is 26.746999999999996 @ Threads = 16
+Min: 26.43  .   Max: 27.17
+Average elasped time is 25.880000000000003 @ Threads = 17 
+Min: 25.55  .   Max: 26.4
+Average elasped time is 25.058999999999997 @ Threads = 18 
+Min: 24.83  .   Max: 25.83
+Average elasped time is 24.148000000000003 @ Threads = 19 
+Min: 23.71  .   Max: 24.73
+
+
+PARALLEL J:
+Average elasped time is 53.934000000000005 @ Threads = 2 
+Min: 52.66  .   Max: 56.1
+Average elasped time is 50.751 @ Threads = 3 
+Min: 48.8  .   Max: 52.49
+Average elasped time is 52.411 @ Threads = 4
+Min: 51.26  .   Max: 53.67
+Average elasped time is 53.79699999999999 @ Threads = 5
+Min: 52.41  .   Max: 55.06
+Average elasped time is 57.750000000000014 @ Threads = 6
+Min: 56.32  .   Max: 58.79
+Average elasped time is 59.299 @ Threads = 7
+Min: 57.76  .   Max: 61.24
+Timeout(>60s) @ Threads = 8 and Parallel -DPARALLEL J
+Timeout(>60s) @ Threads = 9 and Parallel -DPARALLEL J
+Timeout(>60s) @ Threads = 10 and Parallel -DPARALLEL J
+Timeout(>60s) @ Threads = 11 and Parallel -DPARALLEL J
+Timeout(>60s) @ Threads = 12 and Parallel -DPARALLEL J
+Timeout(>60s) @ Threads = 13 and Parallel -DPARALLEL J
+Timeout(>60s) @ Threads = 14 and Parallel -DPARALLEL J
+Timeout(>60s) @ Threads = 15 and Parallel -DPARALLEL J
+Timeout(>60s) @ Threads = 16 and Parallel -DPARALLEL J
+Timeout(>60s) @ Threads = 17 and Parallel -DPARALLEL J
+Timeout(>60s) @ Threads = 18 and Parallel -DPARALLEL J
+Timeout(>60s) @ Threads = 19 and Parallel -DPARALLEL J
+
+
+PLOT:
+
+
+
+Question 3:
+
+
+How do the three parallel versions compare to each other? Venture explanations as to what may be happening.
+Which version, with which number of threads, is the fastest?
+For this version, with that number of threads, what is the parallel speedup?
+For this version, with that number of threads, what is the parallel efficiency?
+If the parallel efficiency is more than a few percent below 100%, why do you think that is?
+
+
+
+Exercise #2 Computation Re-org
+
+Elapsed time is based on 100 iterations since we ran all tests in 100 iterations.
+
+Q1
+N = 6000
+Num_iteration = 100
+Trials = 10
+
+Average elapsed time is 8.216s
+Min: 8.16s  .   Max: 8.28s
+Q2
+An element’s value only depends on the left and top neighbors. Therefore, all elements in a line that is parallel to the anti-diagonal can be processed parallel. 
+
+Q3
+Reorder code:
+
+Average elasped time is 16.32 @ Number of Threads = 1
+Min: 16.18  .   Max: 16.68
+Average elasped time is 9.399 @ Number of Threads = 2
+Min: 9.13  .   Max: 9.56
+Average elasped time is 6.148000000000001 @ Number of Threads = 4
+Min: 6.04  .   Max: 6.29
+Average elasped time is 10.693999999999999 @ Number of Threads = 19
+Min: 9.93  .   Max: 11.87
+
+
+
+
+perf record -e L1-dcache-load-misses,LLC-load-misses ./exercise2_reorg 6000 1 4
+4 threads:
+62266073,,L1-dcache-load-misses:u,606760555,100.00,,
+4849083,,LLC-load-misses:u,606760555,100.00,,
+
+8 threads:
+51623930,,L1-dcache-load-misses:u,911663715,100.00,,
+5075502,,LLC-load-misses:u,911663715,100.00,,
+
+
+
+
+
+
+Q5
+Average elasped time is 24.390000000000004 @ Number of Threads = 1
+Min: 24.21  .   Max: 24.85
+Average elasped time is 17.581 @ Number of Threads = 2
+Min: 16.95  .   Max: 18.84
+Average elasped time is 12.507 @ Number of Threads = 4
+Min: 11.86  .   Max: 13.31
+Average elasped time is 5.699000000000001 @ Number of Threads = 19
+Min: 5.03  .   Max: 6.35
+
+Perf
+4 threads
+9378941,,L1-dcache-load-misses:u,865371965,100.00,,
+4521073,,LLC-load-misses:u,865371965,100.00,,
+
+8 threads
+9372956,,L1-dcache-load-misses:u,1018114099,100.00,,
+4522160,,LLC-load-misses:u,1018114099,100.00,
+
+
+
+
+
+
+Does tiling help, and, if so, by how much?
+What parallel efficiency do we achieve with 19 threads? Would you say it’s worthwhile using 19 threads?
+

@@ -40,6 +40,7 @@ int main(int argc, char **argv) {
   #ifdef CHECK
   double *B = (double *)malloc((N+2) * (N+2) * sizeof(double));
   #endif
+
   // Array initialization
   fprintf(stderr,"Array initialization...\n");
   srand(42);
@@ -59,24 +60,24 @@ int main(int argc, char **argv) {
   struct timeval begin, end;
   gettimeofday(&begin, NULL);
   
-  for (int iter = 0; iter < num_iterations; iter++) {
+  for (int iter=0; iter<num_iterations; iter++) {
     ARRAY(1, 1) = UPDATE(1, 1);
     int m, n;
-    for(int j = 2; j <= N+1; j++) {
+    for(int j=2; j<=N+1; j++) {
       #pragma omp parallel for
-      for(m = j; m >=1; m--) {
+      for(m=j; m>=1; m--) {
         for(n=(j+1-m); n<(j+2-m); n++) {
-          //printf("[%d, %d]\n", m, n);
+          // printf("[%d, %d]\n", m, n);
           ARRAY(m, n) = UPDATE(m, n);
         }
       }
     }
-    for(int j = 2; j <= N+1; j++) {
+    for(int j=2; j<=N+1; j++) {
       #pragma omp parallel for
       for(m = j; m<=(N+1); m++) {
-        for(n= (N+1+j-m); n<(N+2+j-m); n++) {
+        for(n=(N+1+j-m); n<(N+2+j-m); n++) {
           ARRAY(m, n) = UPDATE(m, n);
-          //printf("[%d, %d]\n", m, n);
+          // printf("[%d, %d]\n", m, n);
         }
       }
     }
@@ -84,30 +85,22 @@ int main(int argc, char **argv) {
 
   gettimeofday(&end, NULL);
 
-
-
-
   #ifdef CHECK
-  for (int iter = 0; iter < num_iterations; iter++) {
-    for (int p = 1; p < N+1; p++) {
-      for (int q = 1; q < N+1; q++) {
+  for (int iter=0; iter<num_iterations; iter++) {
+    for (int p=1; p<N+1; p++) {
+      for (int q=1; q<N+1; q++) {
           ARRAYB(p, q) = UPDATEB(p, q);
       }
     }
   }
-  #endif  
-
-  double elapsed = (1.0E+6 * (end.tv_sec - begin.tv_sec) + end.tv_usec -  begin.tv_usec) / 1.0E+6;
-  fprintf(stdout, "time: %.2lf\n", elapsed);
-
   // Compute and print the sum of elements for 
   // correctness checking (may overflow, whatever)
-  #ifdef CHECK
-  double checksum =0;
+
+  double checksum = 0;
   double checksum_reg = 0;
 
-  for (int p=1; p < N+1; p++) {
-    for (int q=1; q < N+1; q++) {
+  for (int p=1; p<N+1; p++) {
+    for (int q=1; q<N+1; q++) {
       checksum_reg += ARRAY(p, q);
       checksum += ARRAYB(p, q);
     }
@@ -115,7 +108,10 @@ int main(int argc, char **argv) {
 
   fprintf(stdout, "Sequential Checksum: %.10f\n",checksum);
   fprintf(stdout, "Parallel Checksum:   %.10f\n", checksum_reg);
+  fprintf(stderr, "Two checksum equal?  %d\n", checksum_reg == checksum);
   #endif
 
+  double elapsed = (1.0E+6 * (end.tv_sec - begin.tv_sec) + end.tv_usec -  begin.tv_usec) / 1.0E+6;
+  fprintf(stdout, "time: %.2lf\n", elapsed);
   exit(0);
 }
