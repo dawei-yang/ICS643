@@ -145,8 +145,8 @@ void updateTile(int start_i, int start_j, int end_i, int end_j, int size) {
   
     for(int j = start_j; j <= end_j; j++) {
 
-      for(int m = j; m >= start_j; m--) {
-         for(int n=(start_i+j-m); n<(start_i+j+1-m); n++) {
+      for(m = j; m >= start_j; m--) {
+         for(n=(start_i+j-m); n<(start_i+j+1-m); n++) {
           ARRAY(n, m) = UPDATE(n, m);
           // printf("[%d, %d]\n", n, m);
         }
@@ -154,8 +154,8 @@ void updateTile(int start_i, int start_j, int end_i, int end_j, int size) {
       }
     }
     for(int j = start_j+1; j <= end_j; j++) {
-      for(int m = j; m<=end_j; m++) {
-        for(int n= (end_i+j-m); n<(end_i+j-m+1); n++) {
+      for(m = j; m<=end_j; m++) {
+        for(n= (end_i+j-m); n<(end_i+j-m+1); n++) {
           ARRAY(n, m) = UPDATE(n, m);
           // printf("[%d, %d]\n", n, m);
         }

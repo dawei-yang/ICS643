@@ -70,27 +70,20 @@ int main(int argc, char **argv) {
         for(int index = 1; index<= k ; index+=size_of_tile) {
           int i = k - index + 1;
           if( i < N && index < N ) {
-            // Parallel each tiles anti-diagonal
+            //no re org
             int start_i = i;
             int start_j = index;
-            int end_i = i+size_of_tile -1;
-            int end_j = index+size_of_tile -1;
-            for(int j = start_j; j <= end_j; j++) {
-//              #pragma omp parallel for
-              for(int m = j; m >= start_j; m--) {
-                for(int n=(start_i+j-m); n<(start_i+j+1-m); n++) {
-                  ARRAY(n, m) = UPDATE(n, m);
-                }
+            int end_i = i+size_of_tile;
+            int end_j = index+size_of_tile;
+
+            for (int p = start_i; p < end_i; p++) {
+              for (int q = start_j; q < end_j; q++) {
+                ARRAY(p,q) = UPDATE(p,q);
+                // printf("[%d, %d]\n", p, q);
               }
             }
-            for(int index = start_j+1; index<=end_j; index++) {
- //             #pragma omp parallel for
-              for(int m = index; m<=end_j; m++) {
-                for(int n= (end_i+index-m); n<(end_i+index-m+1); n++) {
-                  ARRAY(n, m) = UPDATE(n, m);
-                }
-              }
-            }
+
+
           }
         }
     }
