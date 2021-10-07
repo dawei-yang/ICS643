@@ -1,11 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include <sys/time.h>
+#include <time.h>
 #include <stdbool.h>
 
-struct timeval start, end;
-
+struct timespec begin, end;
 int main(int argc, char *argv[]) {
     if(argc != 3) {
         printf("Usage: ./tiled <array size> <tile size>\n");
@@ -55,20 +54,19 @@ int main(int argc, char *argv[]) {
     }
 
     // calculate
-    gettimeofday(&start, NULL);
+    clock_gettime(CLOCK_MONOTONIC, &begin);
 
     for(i=0; i<N; i+=(B>(N-i)? N%B : B)) {
         for(j=0; j<N; j+=(B>(N-j)? N%B: B)) {
             for(k=0; k<(B>(N-i)? N%B : B); k++) {
                 for(l=0; l<(B>(N-j)? N%B : B); l++) {
-                    arrayA[(N*i+j) + (k*N) + l] += arrayB[(N*j+i) + (l*N) + k];
+                    arrayA[N*(i+k)+j+l] += arrayB[N*(j+l)+i+k];
                 }
             }
         }
     }
-    gettimeofday(&end, NULL);
-
-    double elapsed_time = (10.0E+6 * (end.tv_sec - start.tv_sec) + end.tv_usec - start.tv_usec) / 10.0E+6;
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    double elapsed_time =(1.0E+9 * (end.tv_sec - begin.tv_sec) + ( end.tv_nsec - begin.tv_nsec)) / 1.0E+9;
     printf("%lf\n", elapsed_time);
     return 0;
 }

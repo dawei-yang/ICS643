@@ -59,6 +59,7 @@ int main(int argc, char *argv[]) {
 
     for(i = 0; i < N; i++) {
         for(j = 0; j < N; j++) {
+            //printf("-> [%d, %d]\n", (N*i+j), (N*j+i));
             arrayC[N * i + j] = arrayA[N * i + j] + arrayB[N * j + i];
         }
     }
@@ -69,6 +70,7 @@ int main(int argc, char *argv[]) {
         for (j=0; j < N; j+=B) {
             for (p=i; p < i+B; p++) {
                 for (q=j; q < j+B; q++) {
+                    printf("A[%d] + B[%d]\n", B*p+q, B*q+p);
                     arrayD[B * p + q] = arrayA[B * p + q] + arrayB[B * q + p];
                 }
             }
@@ -80,8 +82,9 @@ int main(int argc, char *argv[]) {
         for(j=0; j<N; j+=(B>(N-j)? N%B: B)) {
             for(k=0; k<(B>(N-i)? N%B : B); k++) {
                 for(l=0; l<(B>(N-j)? N%B : B); l++) {
+                    printf("A[%d] + B[%d]\n", (N*(i+k)+j+l), (N*(j+l)+i+k));
                     // arrayA[(N*i+j) + (k*N) + l] += arrayB[(N*j+i) + (l*N) + k];
-                    arrayD[(N*i+j) + (k*N) + l] = arrayA[(N*i+j) + (k*N) + l] += arrayB[(N*j+i) + (l*N) + k];
+                    arrayD[N*(i+k)+j+l] = arrayA[N*(i+k)+j+l] += arrayB[N*(j+l)+i+k];
 
                 }
             }
@@ -95,13 +98,13 @@ int main(int argc, char *argv[]) {
         sumD += arrayD[i];
     }
 
-    for(i = 0; i < N*N; i++) {
+    /* for(i = 0; i < N*N; i++) {
         printf("%lf\t", arrayC[i]);
     }
     printf("\n");
     for(i = 0; i < N*N; i++) {
         printf("%lf\t", arrayD[i]);
-    }
+    } */
 
     double elapsed_time = (10.0E+6 * (end.tv_sec - start.tv_sec) + end.tv_usec - start.tv_usec) / 10.0E+6;
     printf("%lf\n", elapsed_time);

@@ -1,10 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include <sys/time.h>
+#include <time.h>
 
-struct timeval start, end;
-
+struct timespec begin, end;
 int main(int argc, char *argv[]) {
     if(argc != 2) {
         printf("Usage: ./nontiled <N>\n");
@@ -38,15 +37,15 @@ int main(int argc, char *argv[]) {
     }
 
     // calculate
-    gettimeofday(&start, NULL);
+    clock_gettime(CLOCK_MONOTONIC, &begin);
     for(i = 0; i < N; i++) {
         for(j = 0; j < N; j++) {
             arrayA[N * i + j] += arrayB[N * j + i];
         }
     }
-    gettimeofday(&end, NULL);
+    clock_gettime(CLOCK_MONOTONIC, &end);
 
-    double elapsed_time = (10.0E+6 * (end.tv_sec - start.tv_sec) + end.tv_usec - start.tv_usec) / 10.0E+6;
+    double elapsed_time =(1.0E+9 * (end.tv_sec - begin.tv_sec) + ( end.tv_nsec - begin.tv_nsec)) / 1.0E+9;
     printf("%lf\n", elapsed_time);
     return 0;
 }
