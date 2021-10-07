@@ -105,7 +105,7 @@ int main(int argc, char **argv) {
   }
   fprintf(stderr, "Sequential Checksum: %.10f\n",checksum);
   fprintf(stderr, "Parallel Checksum:   %.10f\n", checksum_reg);
-  fprintf(stderr, "Two checksum equal?  %d\n", checksum_reg == checksum);
+  fprintf(stderr, "Two checksums are equal?  %s\n", (checksum_reg == checksum ? "true" : "false"));
   #endif
 
   double elapsed = (1.0E+6 * (end.tv_sec - begin.tv_sec) + end.tv_usec -  begin.tv_usec) / 1.0E+6;

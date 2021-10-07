@@ -50,11 +50,11 @@ int main(int argc, char **argv) {
 
 	#ifdef PARALLEL_K
     for (i=0; i < N; i++) {
-    #pragma omp parallel for
+    #pragma omp parallel for private(k, j)
         for (k=0; k < N; k++) {
             for (j=0; j < N; j++) {
                 // printf("C[%d] = C[%d] + A[%d] + B[%d]\n", i*N+j, i*N+j, i*N+k, k*N+j);
-                #pragma omp critical
+                #pragma omp atomic
                 C[i*N + j] +=  A[i*N + k] * B[k*N + j];
                 
             }
