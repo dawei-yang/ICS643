@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
     int *A = (int *)malloc(N * N * sizeof(int));
     int *B = (int *)malloc(N * N * sizeof(int));
     int *C = (int *)calloc(N * N, sizeof(int));
-
+    int i,j,k;
     for (int i=0; i < N*N; i++) {
         A[i] = rand() % 1024;
         B[i] = rand() % 1024;
@@ -34,11 +34,10 @@ int main(int argc, char **argv) {
     fprintf(stderr, "Number of Threads = %d\n", T);
     struct timeval begin, end;
     omp_set_num_threads(T);
-	int i,j,k;
     gettimeofday(&begin, NULL);
 
 	#ifdef PARALLEL_I
-	#pragma omp parallel for
+	#pragma omp parallel for private(i, j, k)
     for (i=0; i < N; i++) {
         for (k=0; k < N; k++) {
             for (j=0; j < N; j++) {
@@ -65,7 +64,7 @@ int main(int argc, char **argv) {
     #ifdef PARALLEL_J
     for (i=0; i < N; i++) {
         for (k=0; k < N; k++) {
-            #pragma omp parallel for
+            #pragma omp parallel for private(j)
             for (j=0; j < N; j++) {
                 C[i*N + j] += A[i*N + k] * B[k*N + j];
             }
@@ -77,9 +76,9 @@ int main(int argc, char **argv) {
     /* Check Parallel Results by comparing each element with the sequential one*/
     #ifdef CHECK
     int *D = (int *)calloc(N * N, sizeof(int));
-    for (int i=0; i < N; i++) {
-      for (int k=0; k < N; k++) {
-        for (int j=0; j < N; j++) {
+    for (i=0; i < N; i++) {
+      for (k=0; k < N; k++) {
+        for (j=0; j < N; j++) {
           D[i*N + j] += A[i*N + k] * B[k*N + j];
         }
       }

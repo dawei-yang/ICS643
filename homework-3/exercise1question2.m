@@ -1,23 +1,47 @@
 
 
 figure(2); hold on
+
+no_parallel= [24.00 24.08 24.06 24.03 24.16 24.04 24.13 24.03 24.10 24.07 24.02 24.09 24.10 24.05 24.01 24.05 24.11 24.08 24.14];
+
 parallel_i = [13.917 9.378 7.281 5.899 5.084 4.387 3.945 3.584 3.239 2.977 2.786 2.607 2.457 2.31 2.236 2.167 2.118 2.115];
+i_y_neg = [13.56 9.09 6.98 5.81 5.01 4.24 3.83 3.45 3.18 2.88 2.73 2.55 2.39 2.24 2.06 2.08 2.05 1.95];
+i_y_pos = [14.42 9.72 7.5 6.07 5.23 4.57 4.16 3.74 3.31 3.07 2.88 2.65 2.55 2.48 2.46 2.26 2.18 2.6];
+
 parallel_k = [390.84 249.85 229.108 190.58 167.98 150.74 137.65 128.558 117.654 111.36 104.326 98.732 93.127 88.671 84.486 80.88 78.33 78.09];
+k_y_neg = [383.97 248.7 227.31 190.02 167.09 149.9 136.4 128.06 117.38 111.1 104.05 98.48 92.73 88.47 84.27 80.43 77.69 76.96];
+k_y_pos = [397.61 250.66 230.7 191.31 168.72 151.33 137.65 129.48 117.94 111.71 104.8 99.1 93.33 89.45 84.67 81.82 78.77 79.28];
+
 parallel_j = [53.934 50.751 52.411 53.797 57.75 59.299 64.285 67.55 70.625 75.839 80.166 83.454 87.87 90.644 94.439 98.6 99.749 109.549];
+j_y_neg = [52.66 48.4 51.26 52.41 56.32 57.76 61.69 65.26 67.57 74.75 79.11 82 85.46 88.63 92.97 97.14 98.07 107.73];
+j_y_pos = [56.1 52.49 53.67 55.06 58.79 61.24 65.94 69.48 72.61 77.47 82.32 84.45 89.33 92.66 96.46 100.08 101.51 113.02];
+
+error_k = parallel_k-k_y_neg
+
+
 x = [2:1:19];
+xx = [1]
 width = 20;
-height = 400;
-i = plot(x, parallel_i)
+ylim([-100 400])
+%height = 400;
+i = errorbar(x, parallel_i, parallel_i - i_y_neg, i_y_pos - parallel_i )
 m_i = "Parallel I"
-j = plot(x, parallel_j)
+j = errorbar(x, parallel_j, parallel_j - j_y_neg, j_y_pos - parallel_j)
 m_j = "parallel J"
-k = plot(x, parallel_k)
+k = errorbar(x, parallel_k, parallel_k - k_y_neg, k_y_pos - parallel_k)
 m_k = "parallel K"
+ori =  errorbar(xx, 24.07, 0.07, 0.09, 'o')
+m_ori = "no parallel"
 % p = plot(x, parallel_i, x, 'g', parallel_j, '--', x, parallel_k, 'b--o');
 
-legend([i, j, k], [m_i, m_j, m_k])
-title('$\mid Performance \mid$','Interpreter','latex')
-xlabel('Number of Threads. $T$','Interpreter','latex')
-ylabel('Elapsed Time $t$','Interpreter','latex')
+legend([i, j, k, ori], [m_i, m_j, m_k, m_ori]);
+title('$\mid Performance \mid$','Interpreter','latex');
+xlabel('Number of Threads. $T$','Interpreter','latex');
+ylabel('Elapsed Time $t$','Interpreter','latex');
 
 grid
+% x = 1:10:100;
+% y = [20 30 45 40 60 65 80 75 95 90];
+% yneg = [1 2 3 1 1 1 1 1 1 1];
+% ypos = [2 2 2 2 2 2 2 2 2 2]
+% errorbar(x,y,yneg, ypos)

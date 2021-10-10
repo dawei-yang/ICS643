@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
       for(m=j; m>=1; m--) {
         for(n=(j+1-m); n<(j+2-m); n++) {
           // printf("[%d, %d]\n", m, n);
-          ARRAY(m, n) = UPDATE(m, n);
+          ARRAY(n, m) = UPDATE(n, m);
         }
       }
     }
@@ -76,7 +76,7 @@ int main(int argc, char **argv) {
       #pragma omp parallel for
       for(m = j; m<=(N+1); m++) {
         for(n=(N+1+j-m); n<(N+2+j-m); n++) {
-          ARRAY(m, n) = UPDATE(m, n);
+          ARRAY(n, m) = UPDATE(n, m);
           // printf("[%d, %d]\n", m, n);
         }
       }

@@ -64,22 +64,22 @@ int main(int argc, char **argv) {
     for(int k=1 ; k<N*2; k+=TILESIZE) {
       // Parallel for tiles anti-diagonal
       #pragma omp parallel for
-        for(int index=1; index<=k; index+=TILESIZE) {
-          int i = k-index+1;
-          if(i<=N && index<=N) {
-            int remain_i = N+1-i;
-            int remain_j = N+1-index;
-            int end_i = (TILESIZE < remain_i ? i+TILESIZE : i+remain_i);
-            int end_j = (TILESIZE < remain_j ? index+TILESIZE : index+remain_j);
+      for(int index=1; index<=k; index+=TILESIZE) {
+        int i = k-index+1;
+        if(i<=N && index<=N) {
+          int remain_i = N+1-i;
+          int remain_j = N+1-index;
+          int end_i = (TILESIZE < remain_i ? i+TILESIZE : i+remain_i);
+          int end_j = (TILESIZE < remain_j ? index+TILESIZE : index+remain_j);
 
-            for (int p=i; p<end_i; p++) {
-              for (int q=index; q<end_j; q++) {
-                ARRAY(p,q) = UPDATE(p,q);
-                // printf("[%d, %d]\n", p, q);
-              }
+          for (int p=i; p<end_i; p++) {
+            for (int q=index; q<end_j; q++) {
+              ARRAY(p,q) = UPDATE(p,q);
+              // printf("[%d, %d]\n", p, q);
             }
           }
         }
+      }
     }
   }
   gettimeofday(&end, NULL);
@@ -94,18 +94,18 @@ int main(int argc, char **argv) {
   }
   // Compute and print the sum of elements for 
   // correctness checking (may overflow, whatever)
-  double checksum =0;
-  double checksum_reg = 0;
+  double checksum_original = 0;
+  double checksum_tiled = 0;
 
   for (int p=1; p<N+1; p++) {
     for (int q=1; q<N+1; q++) {
-      checksum_reg += ARRAY(p, q);
-      checksum += ARRAYB(p, q);
+      checksum_tiled += ARRAY(p, q);
+      checksum_original += ARRAYB(p, q);
     }
   }
-  fprintf(stderr, "Sequential Checksum: %.10f\n",checksum);
-  fprintf(stderr, "Parallel Checksum:   %.10f\n", checksum_reg);
-  fprintf(stderr, "Two checksums are equal?  %s\n", (checksum_reg == checksum ? "true" : "false"));
+  fprintf(stderr, "Sequential Checksum: %.10f\n",checksum_original);
+  fprintf(stderr, "Parallel Checksum:   %.10f\n", checksum_tiled);
+  fprintf(stderr, "Two checksums are equal?  %s\n", (checksum_original == checksum_tiled ? "true" : "false"));
   #endif
 
   double elapsed = (1.0E+6 * (end.tv_sec - begin.tv_sec) + end.tv_usec -  begin.tv_usec) / 1.0E+6;
