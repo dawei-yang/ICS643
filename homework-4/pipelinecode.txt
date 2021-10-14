@@ -1,0 +1,25 @@
+int offset;
+MPI_Status status;
+
+if (rank == 0) {
+    offset = 0;
+    while (offset < NUM_BYTES) {
+        MPI_Send(&chunk_size, 1, MPI_INT, rank + 1, 3, MPI_COMM_WORLD);
+        MPI_Send(&offset, 1, MPI_INT, rank + 1, 2, MPI_COMM_WORLD);
+        MPI_Send(&buffer[offset], chunk_size, MPI_BYTE, rank + 1, 1, MPI_COMM_WORLD); ***
+        offset = offset + chunk_size;
+        if ((offset + chunk_size) >= NUM_BYTES) {
+            chunk_size = (NUM_BYTES - offset);
+        }
+    }
+}
+else {
+    MPI_Recv(&chunk_size, 1, MPI_INT, rank - 1, 3, MPI_COMM_WORLD, &status);
+    MPI_Recv(&offset, 1, MPI_INT, rank - 1, 2, MPI_COMM_WORLD, &status);
+    MPI_Recv(&buffer[offset], chunk_size, MPI_BYTE, rank - 1, 1, MPI_COMM_WORLD, &status);
+    if (rank != num_procs - 1) {
+        MPI_Send(&chunk_size, 1, MPI_INT, rank + 1, 3, MPI_COMM_WORLD);
+        MPI_Send(&offset, 1, MPI_INT, rank + 1, 2, MPI_COMM_WORLD);
+        MPI_Send(&buffer[offset], chunk_size, MPI_BYTE, rank + 1, 1, MPI_COMM_WORLD);
+    }
+}

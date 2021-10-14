@@ -1,0 +1,8 @@
+<?xml version='1.0'?>
+<!DOCTYPE platform SYSTEM "https://simgrid.org/simgrid.dtd"> 
+<platform version="4.1">
+  <zone id="world" routing="Full"> 
+      <cluster id="cluster-crossbar" prefix="node-" 
+          radical="0-254" suffix=".me" speed="1Gf" bw="100MBps" lat="50us" />
+  </zone>
+</platform>

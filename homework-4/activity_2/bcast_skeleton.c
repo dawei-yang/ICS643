@@ -146,14 +146,14 @@ int main(int argc, char *argv[])
 	// Process rank 0 should be  the source of the broadcast
 
 	// #include "bcast_solution.c"
-
-	MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+	int size;
+	MPI_Comm_size(MPI_COMM_WORLD, &size);
 	if(strcmp(bcast_implementation_name, "default_bcast") == 0) {
 		MPI_Bcast(&buffer, 2, MPI_INT, 0, MPI_COMM_WORLD);
 	}
 	if(strcmp(bcast_implementation_name, "naive_bcast") == 0) {
 		if(rank == 0) {
-			for(int i = 1; i< num_procs; i++) {
+			for(int i = 1; i< size; i++) {
 				MPI_Send(&buffer, 2, MPI_INT, i, 1, MPI_COMM_WORLD);
 			}
 		}else {
@@ -168,26 +168,7 @@ int main(int argc, char *argv[])
 		else {
 			MPI_Recv(&buffer, 2, MPI_INT, rank-1, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 		// fprintf(stderr, "recv {%s} from [%d]\n", buffer, rank-1);
-			if(rank != num_procs-1)  MPI_Send(&buffer, 2, MPI_INT, rank+1, 1, MPI_COMM_WORLD);
-		}
-	}
-	if(strcmp(bcast_implementation_name, "pipelined_ring_bcast") == 0) {
-		int remain = NUM_BYTES;
-		int start;
-
-		if (argc >= 2) {
-			chunk_size = strtol(argv[2], NULL, 10);
-		}
-		if(rank == 0) {
-			start = 0;
-			for(int i=0; i<NUM_BYTES; i=i+chunk_size) {
-				MPI_Send(&buffer[i], chunk_size, MPI_BYTE, rank+1, 3, MPI_COMM_WORLD);
-			}		
-		}else {
-			for(int j=0; j<NUM_BYTES; j=j+chunk_size) {
-				MPI_Recv(&buffer[j], chunk_size, MPI_BYTE, rank-1, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-				if(rank != (num_procs -1)) MPI_Send(&buffer[j], chunk_size, MPI_BYTE, rank+1, 3, MPI_COMM_WORLD);
-			}
+			if(rank != size-1)  MPI_Send(&buffer, 2, MPI_INT, rank+1, 1, MPI_COMM_WORLD);
 		}
 	}
 
@@ -205,7 +186,6 @@ int main(int argc, char *argv[])
 		// Print a single message in case of a mismatch, but continue
 		// receiving other checksums to ensure that all processes
 		// reach the MPI_Finalize()
-
 		if ((all_ok == 1) && (checksum != received_checksum)) {
 		fprintf(stderr,"\t** Non-matching checksum! **\n");
 		all_ok = 0;
@@ -214,17 +194,9 @@ int main(int argc, char *argv[])
 	}
 	} else {
 	int checksum=0;
-
-/// Add debug stuff
-	//fprintf(stderr,"rank [%d]:\n",rank);
 	for (j = 0; j < NUM_BYTES; j++) {
 		checksum += buffer[j];
-		//fprintf(stderr,"%c", buffer[j]);
 	}
-	//fprintf(stderr,"\n");
-// debug stuff end
-
-
 	MPI_Send(&checksum, 1, MPI_INT, 0, 1, MPI_COMM_WORLD);
 	// fprintf(stderr,"send checksum [%d]; from [%d] to [0]\n", checksum, rank);
 	}
