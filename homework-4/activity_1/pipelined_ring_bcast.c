@@ -147,6 +147,7 @@ int main(int argc, char *argv[])
 
 	// #include "bcast_solution.c"
 	int size;
+	int slice_size;
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 	if(strcmp(bcast_implementation_name, "default_bcast") == 0) {
 		MPI_Bcast(&buffer, 2, MPI_INT, 0, MPI_COMM_WORLD);
@@ -169,6 +170,14 @@ int main(int argc, char *argv[])
 			MPI_Recv(&buffer, 2, MPI_INT, rank-1, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 		// fprintf(stderr, "recv {%s} from [%d]\n", buffer, rank-1);
 			if(rank != size-1)  MPI_Send(&buffer, 2, MPI_INT, rank+1, 1, MPI_COMM_WORLD);
+		}
+	}
+	if(strcmp(bcast_implementation_name, "pipelined_ring_bcast") == 0) {
+		if(rank == 3) {
+			if (argc >= 2) {
+				slice_size = strtol(argv[2], NULL, 10);
+			}
+			fprintf(stderr,"slice size: %d\n", slice_size);
 		}
 	}
 
