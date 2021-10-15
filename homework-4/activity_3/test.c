@@ -120,11 +120,14 @@ int main(int argc, char *argv[])
 	// On rank 0 fill the buffer with random data 
 	if (0 == rank) { 
 		checksum = 0;
-		srandom(RAND_SEED);
-		for (j = 0; j < NUM_BYTES; j++) {
-			buffer[j] = (char) (random() % 256); 
+		int i = 65;
+		for (j = 0; j < 40; j++) {
+			buffer[j] = i;
+			i++; 
 			checksum += buffer[j];
 		}
+		printf("Rank 0 checksum = %d\n", checksum);
+		printf("buffer is %s\n", buffer);
 	}
 
 	// Start the timer
@@ -146,18 +149,57 @@ int main(int argc, char *argv[])
 	// Process rank 0 should be  the source of the broadcast
 
 	// #include "bcast_solution.c"
-
-	MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+	int size;
+	MPI_Comm_size(MPI_COMM_WORLD, &size);
 	if(strcmp(bcast_implementation_name, "default_bcast") == 0) {
 		MPI_Bcast(&buffer, 2, MPI_INT, 0, MPI_COMM_WORLD);
 	}
 	if(strcmp(bcast_implementation_name, "naive_bcast") == 0) {
+		char *tmp = malloc(sizeof(char) * 10); 
 		if(rank == 0) {
-			for(int i = 1; i< num_procs; i++) {
-				MPI_Send(&buffer, 2, MPI_INT, i, 1, MPI_COMM_WORLD);
+			
+/* 			for(int i = 0; i< 10; i++) {
+				tmp[i] = buffer[i];	
 			}
+			printf("send first one: %s\n", tmp);
+			for(int i = 1; i< size; i++) {
+				MPI_Ssend(&(tmp), 2, MPI_INT, i, 1, MPI_COMM_WORLD);
+			}
+
+			for(int i = 0; i< 10; i++) {
+				tmp[i] = buffer[i + 10];	
+			}
+			printf("send second one: %s\n", tmp);
+
+			for(int i = 1; i< size; i++) {
+				MPI_Ssend(&(tmp), 2, MPI_INT, i, 2, MPI_COMM_WORLD);
+			} */
+
+/* 			MPI_Send(&buffer[0], chunk_size, MPI_BYTE, rank+1, 3, MPI_COMM_WORLD);
+			MPI_Send(&buffer[2], chunk_size, MPI_BYTE, rank+1, 3, MPI_COMM_WORLD);
+			MPI_Send(&buffer[4], chunk_size, MPI_BYTE, rank+1, 3, MPI_COMM_WORLD);
+			MPI_Send(&buffer[6], chunk_size, MPI_BYTE, rank+1, 3, MPI_COMM_WORLD);
+			MPI_Send(&buffer[8], chunk_size, MPI_BYTE, rank+1, 3, MPI_COMM_WORLD); */
+
+
 		}else {
-			MPI_Recv(&buffer, 2, MPI_INT, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+			MPI_Recv(&buffer, 2, MPI_INT, 0, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			fprintf(stderr,"receive [%s]\n", buffer);
+/* 				MPI_Recv(&buffer[0], chunk_size, MPI_BYTE, rank-1, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+				if(rank != (num_procs -1)) MPI_Send(&buffer[0], chunk_size, MPI_BYTE, rank+1, 3, MPI_COMM_WORLD);
+
+				MPI_Recv(&buffer[2], chunk_size, MPI_BYTE, rank-1, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+				if(rank != (num_procs -1)) MPI_Send(&buffer[2], chunk_size, MPI_BYTE, rank+1, 3, MPI_COMM_WORLD);
+
+				MPI_Recv(&buffer[4], chunk_size, MPI_BYTE, rank-1, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+				if(rank != (num_procs -1)) MPI_Send(&buffer[4], chunk_size, MPI_BYTE, rank+1, 3, MPI_COMM_WORLD);
+
+				MPI_Recv(&buffer[6], chunk_size, MPI_BYTE, rank-1, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+				if(rank != (num_procs -1)) MPI_Send(&buffer[6], chunk_size, MPI_BYTE, rank+1, 3, MPI_COMM_WORLD);
+
+				MPI_Recv(&buffer[8], chunk_size, MPI_BYTE, rank-1, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+				if(rank != (num_procs -1)) MPI_Send(&buffer[8], chunk_size, MPI_BYTE, rank+1, 3, MPI_COMM_WORLD); */
 		}
 	}
 	if(strcmp(bcast_implementation_name, "ring_bcast") == 0) {
@@ -168,35 +210,7 @@ int main(int argc, char *argv[])
 		else {
 			MPI_Recv(&buffer, 2, MPI_INT, rank-1, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 		// fprintf(stderr, "recv {%s} from [%d]\n", buffer, rank-1);
-			if(rank != num_procs-1)  MPI_Send(&buffer, 2, MPI_INT, rank+1, 1, MPI_COMM_WORLD);
-		}
-	}
-	if(strcmp(bcast_implementation_name, "pipelined_ring_bcast") == 0) {
-		int remain = NUM_BYTES;
-	    int send_length;
-		if (argc >= 2) {
-			chunk_size = strtol(argv[2], NULL, 10);
-		}
-		if(rank == 0) {
-		
-			for(int i=0; i<NUM_BYTES; i=i+chunk_size) {
-				if ( (i+ chunk_size) > NUM_BYTES) {
-					send_length = (NUM_BYTES % chunk_size);
-				}else {
-					send_length = chunk_size;
-				}
-				MPI_Send(&buffer[i], send_length, MPI_BYTE, rank+1, 3, MPI_COMM_WORLD);
-			}		
-		}else {
-			for(int j=0; j<NUM_BYTES; j=j+chunk_size) {
-				if ( (i+ chunk_size) > NUM_BYTES) {
-					send_length = (NUM_BYTES % chunk_size);
-				}else {
-					send_length = chunk_size;
-				}
-				MPI_Recv(&buffer[j], send_length, MPI_BYTE, rank-1, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-				if(rank != (num_procs -1)) MPI_Send(&buffer[j], send_length, MPI_BYTE, rank+1, 3, MPI_COMM_WORLD);
-			}
+			if(rank != size-1)  MPI_Send(&buffer, 2, MPI_INT, rank+1, 1, MPI_COMM_WORLD);
 		}
 	}
 
@@ -214,7 +228,6 @@ int main(int argc, char *argv[])
 		// Print a single message in case of a mismatch, but continue
 		// receiving other checksums to ensure that all processes
 		// reach the MPI_Finalize()
-
 		if ((all_ok == 1) && (checksum != received_checksum)) {
 		fprintf(stderr,"\t** Non-matching checksum! **\n");
 		all_ok = 0;
@@ -223,19 +236,12 @@ int main(int argc, char *argv[])
 	}
 	} else {
 	int checksum=0;
-
-/// Add debug stuff
-	//fprintf(stderr,"rank [%d]:\n",rank);
-	for (j = 0; j < NUM_BYTES; j++) {
+	fprintf(stderr,"Rank [%d]; Buffer [%s]\n", rank, buffer);
+	for (j = 0; j < 20; j++) {
 		checksum += buffer[j];
-		//fprintf(stderr,"%c", buffer[j]);
 	}
-	//fprintf(stderr,"\n");
-// debug stuff end
-
-
 	MPI_Send(&checksum, 1, MPI_INT, 0, 1, MPI_COMM_WORLD);
-	// fprintf(stderr,"send checksum [%d]; from [%d] to [0]\n", checksum, rank);
+	fprintf(stderr,"send checksum [%d]; from [%d] to [0]\n", checksum, rank);
 	}
 
 	// Print out bcast implementation name and wall-clock time, only if the bcast was successful
