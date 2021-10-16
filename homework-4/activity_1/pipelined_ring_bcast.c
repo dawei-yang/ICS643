@@ -146,8 +146,6 @@ int main(int argc, char *argv[])
 	// Process rank 0 should be  the source of the broadcast
 
 	// #include "bcast_solution.c"
-
-	MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 	if(strcmp(bcast_implementation_name, "default_bcast") == 0) {
 		MPI_Bcast(&buffer, 2, MPI_INT, 0, MPI_COMM_WORLD);
 	}
@@ -163,34 +161,12 @@ int main(int argc, char *argv[])
 	if(strcmp(bcast_implementation_name, "ring_bcast") == 0) {
 		if(rank == 0) {
 			MPI_Send(&buffer, 2, MPI_INT, rank+1, 1, MPI_COMM_WORLD);
-			// fprintf(stderr, "sent {%s} from [%d] to [%d]\n", buffer, rank, rank+1);
 		}
 		else {
 			MPI_Recv(&buffer, 2, MPI_INT, rank-1, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-		// fprintf(stderr, "recv {%s} from [%d]\n", buffer, rank-1);
 			if(rank != num_procs-1)  MPI_Send(&buffer, 2, MPI_INT, rank+1, 1, MPI_COMM_WORLD);
 		}
 	}
-	if(strcmp(bcast_implementation_name, "pipelined_ring_bcast") == 0) {
-		int remain = NUM_BYTES;
-		int start;
-
-		if (argc >= 2) {
-			chunk_size = strtol(argv[2], NULL, 10);
-		}
-		if(rank == 0) {
-			start = 0;
-			for(int i=0; i<NUM_BYTES; i=i+chunk_size) {
-				MPI_Send(&buffer[i], chunk_size, MPI_BYTE, rank+1, 3, MPI_COMM_WORLD);
-			}		
-		}else {
-			for(int j=0; j<NUM_BYTES; j=j+chunk_size) {
-				MPI_Recv(&buffer[j], chunk_size, MPI_BYTE, rank-1, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-				if(rank != (num_procs -1)) MPI_Send(&buffer[j], chunk_size, MPI_BYTE, rank+1, 3, MPI_COMM_WORLD);
-			}
-		}
-	}
-
 
 	/////////////////////////////////////////////////////////////////////////////
 	///////////////////////////// TO IMPLEMENT: END /////////////////////////////

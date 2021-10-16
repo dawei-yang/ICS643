@@ -147,7 +147,6 @@ int main(int argc, char *argv[])
 
 	// #include "bcast_solution.c"
 
-	MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 	if(strcmp(bcast_implementation_name, "default_bcast") == 0) {
 		MPI_Bcast(&buffer, 2, MPI_INT, 0, MPI_COMM_WORLD);
 	}
@@ -172,9 +171,8 @@ int main(int argc, char *argv[])
 	if(strcmp(bcast_implementation_name, "pipelined_ring_bcast") == 0) {
 		int remain = NUM_BYTES;
 	    int send_length;
-		if (argc >= 2) {
-			chunk_size = strtol(argv[2], NULL, 10);
-		}
+		chunk_size = strtol(argv[2], NULL, 10);
+		
 		if(rank == 0) {
 		
 			for(int i=0; i<NUM_BYTES; i=i+chunk_size) {
@@ -197,7 +195,6 @@ int main(int argc, char *argv[])
 			}
 		}
 	}
-
 
 	/////////////////////////////////////////////////////////////////////////////
 	///////////////////////////// TO IMPLEMENT: END /////////////////////////////
