@@ -174,24 +174,23 @@ int main(int argc, char *argv[])
 		chunk_size = strtol(argv[2], NULL, 10);
 		
 		if(rank == 0) {
-		
 			for(int i=0; i<NUM_BYTES; i=i+chunk_size) {
-				if ( (i+ chunk_size) > NUM_BYTES) {
+				if((i+chunk_size) > NUM_BYTES) {
 					send_length = (NUM_BYTES % chunk_size);
-				}else {
+				} else {
 					send_length = chunk_size;
 				}
 				MPI_Send(&buffer[i], send_length, MPI_BYTE, rank+1, 3, MPI_COMM_WORLD);
 			}		
 		}else {
 			for(int j=0; j<NUM_BYTES; j=j+chunk_size) {
-				if ( (i+ chunk_size) > NUM_BYTES) {
+				if((i+ chunk_size) > NUM_BYTES) {
 					send_length = (NUM_BYTES % chunk_size);
-				}else {
+				} else {
 					send_length = chunk_size;
 				}
 				MPI_Recv(&buffer[j], send_length, MPI_BYTE, rank-1, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-				if(rank != (num_procs -1)) MPI_Send(&buffer[j], send_length, MPI_BYTE, rank+1, 3, MPI_COMM_WORLD);
+				if(rank != (num_procs-1)) MPI_Send(&buffer[j], send_length, MPI_BYTE, rank+1, 3, MPI_COMM_WORLD);
 			}
 		}
 	}

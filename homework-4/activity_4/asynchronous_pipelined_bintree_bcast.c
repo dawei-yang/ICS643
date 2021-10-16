@@ -162,32 +162,30 @@ int main(int argc, char *argv[])
 		if(rank == 0) {
 			fprintf(stderr, "chunk size: [%d]\n", chunk_size);		
 			for(int i=0; i<NUM_BYTES; i+=chunk_size) {
-
-				if ( (i+ chunk_size) > NUM_BYTES) {
-					real_length = (NUM_BYTES % chunk_size);
+				if((i+chunk_size)>NUM_BYTES) {
+					real_length = (NUM_BYTES%chunk_size);
 				}else {
 					real_length = chunk_size;
 				}
-
-				MPI_Send(&buffer[i], real_length, MPI_BYTE, (rank*2 +1), 1, MPI_COMM_WORLD);
-				MPI_Send(&buffer[i], real_length, MPI_BYTE, (rank*2 +2), 1, MPI_COMM_WORLD);
+				MPI_Send(&buffer[i], real_length, MPI_BYTE, (rank*2+1), 1, MPI_COMM_WORLD);
+				MPI_Send(&buffer[i], real_length, MPI_BYTE, (rank*2+2), 1, MPI_COMM_WORLD);
 			}
 		}
 		// leaves
-		else if (rank > ((num_procs/2)-1)){
-			if ( (i+ chunk_size) > NUM_BYTES) {
-				real_length = (NUM_BYTES % chunk_size);
-			}else {
-				real_length = chunk_size;
-			}
+		else if(rank > ((num_procs/2)-1)){
 			for(int i=0; i<NUM_BYTES; i+=chunk_size) {
+				if(i+chunk_size > NUM_BYTES) {
+					real_length = (NUM_BYTES%chunk_size);
+				} else {
+					real_length = chunk_size;
+				}
 				if(rank%2 != 0){
 					MPI_Recv(&buffer[i], real_length, MPI_BYTE, (rank-1)/2, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 				} else {
 					MPI_Recv(&buffer[i], real_length, MPI_BYTE, (rank-2)/2, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 				}
 			}
-		}else {
+		} else {
 		// others
 			if(rank%2 != 0) {
 				MPI_Recv(&buffer[0], chunk_size, MPI_BYTE, (rank-1)/2, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);		
@@ -197,22 +195,23 @@ int main(int argc, char *argv[])
 
 			int i;
 			for(i=chunk_size; i<NUM_BYTES; i+=chunk_size) {
-				if ( (i+ chunk_size) > NUM_BYTES) {
-					real_length = (NUM_BYTES % chunk_size);
+				if((i+chunk_size) > NUM_BYTES) {
+					real_length = (NUM_BYTES%chunk_size);
 				}else {
 					real_length = chunk_size;
 				}
-				// left
 				if(rank%2 != 0) {
-					if((2*rank +1) < num_procs) MPI_Isend(&buffer[i-chunk_size], chunk_size, MPI_BYTE, (2*rank +1), 1, MPI_COMM_WORLD, &request);
-					if((2*rank +2) < num_procs) MPI_Isend(&buffer[i-chunk_size], chunk_size, MPI_BYTE, (2*rank +2), 1, MPI_COMM_WORLD, &request2);
+					// Left child
+					if((2*rank+1) < num_procs) MPI_Isend(&buffer[i-chunk_size], chunk_size, MPI_BYTE, (2*rank+1), 1, MPI_COMM_WORLD, &request);
+					if((2*rank+2) < num_procs) MPI_Isend(&buffer[i-chunk_size], chunk_size, MPI_BYTE, (2*rank+2), 1, MPI_COMM_WORLD, &request2);
 					MPI_Irecv(&buffer[i], real_length, MPI_BYTE, (rank-1)/2, 1, MPI_COMM_WORLD, &request3);
 					MPI_Wait(&request, &status);
 					MPI_Wait(&request2, &status2);
 					MPI_Wait(&request3, &status3);
 				} else {
-					if((2*rank +1) < num_procs) MPI_Isend(&buffer[i-chunk_size], chunk_size, MPI_BYTE, (rank*2 +1), 1, MPI_COMM_WORLD, &request);
-					if((2*rank +2) < num_procs) MPI_Isend(&buffer[i-chunk_size], chunk_size, MPI_BYTE, (rank*2 +2), 1, MPI_COMM_WORLD, &request2);
+				    // Right child
+					if((2*rank+1) < num_procs) MPI_Isend(&buffer[i-chunk_size], chunk_size, MPI_BYTE, (rank*2+1), 1, MPI_COMM_WORLD, &request);
+					if((2*rank+2) < num_procs) MPI_Isend(&buffer[i-chunk_size], chunk_size, MPI_BYTE, (rank*2+2), 1, MPI_COMM_WORLD, &request2);
 					MPI_Irecv(&buffer[i], chunk_size, MPI_BYTE, (rank-2)/2, 1, MPI_COMM_WORLD, &request3);
 					MPI_Wait(&request, &status);
 					MPI_Wait(&request2, &status2);
@@ -220,13 +219,13 @@ int main(int argc, char *argv[])
 				}
 			}
 
-			if ( (i) > NUM_BYTES) {
+			if(i > NUM_BYTES) {
 				real_length = (NUM_BYTES % chunk_size);
 			}else {
 				real_length = chunk_size;
 			}
-			if((2*rank +1) < num_procs) MPI_Send(&buffer[i-chunk_size], real_length, MPI_BYTE, (rank*2 +1), 1, MPI_COMM_WORLD);
-			if((2*rank +2) < num_procs) MPI_Send(&buffer[i-chunk_size], real_length, MPI_BYTE, (rank*2 +2), 1, MPI_COMM_WORLD);
+			if((2*rank+1) < num_procs) MPI_Send(&buffer[i-chunk_size], real_length, MPI_BYTE, (rank*2+1), 1, MPI_COMM_WORLD);
+			if((2*rank+2) < num_procs) MPI_Send(&buffer[i-chunk_size], real_length, MPI_BYTE, (rank*2+2), 1, MPI_COMM_WORLD);
 		}
 	}
 

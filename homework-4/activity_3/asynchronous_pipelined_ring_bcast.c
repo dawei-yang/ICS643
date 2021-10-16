@@ -213,18 +213,18 @@ int main(int argc, char *argv[])
 		}
 		if (rank == 0) {
 			for(int i=0; i<NUM_BYTES; i+=chunk_size) {
-				if ( (i+ chunk_size) > NUM_BYTES) {
+				if((i+chunk_size) > NUM_BYTES) {
 					real_length = (NUM_BYTES % chunk_size);
-				}else {
+				} else {
 					real_length = chunk_size;
 				}
 				MPI_Send(&buffer[i], real_length, MPI_BYTE, rank+1, 0, MPI_COMM_WORLD);
 			}
 		} else if(rank == (num_procs-1)) {
-			for( int i=0; i<NUM_BYTES; i=i+chunk_size) {
-				if ( (i+ chunk_size) > NUM_BYTES) {
+			for(int i=0; i<NUM_BYTES; i=i+chunk_size) {
+				if((i+ chunk_size) > NUM_BYTES) {
 					real_length = (NUM_BYTES % chunk_size);
-				}else {
+				} else {
 					real_length = chunk_size;
 				}				
 				MPI_Recv(&buffer[i], real_length, MPI_BYTE, rank-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
@@ -234,9 +234,9 @@ int main(int argc, char *argv[])
 			int j;
 			MPI_Recv(&buffer[0], chunk_size, MPI_BYTE, rank-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 			for(j=chunk_size; j<NUM_BYTES; j=j+chunk_size ) {
-				if ( (j+ chunk_size) > NUM_BYTES) {
+				if((j+ chunk_size) > NUM_BYTES) {
 					real_length = (NUM_BYTES % chunk_size);
-				}else {
+				} else {
 					real_length = chunk_size;
 				}	
 				MPI_Isend(&buffer[j-chunk_size], chunk_size, MPI_BYTE, rank+1, 0, MPI_COMM_WORLD, &request);
@@ -245,9 +245,9 @@ int main(int argc, char *argv[])
 				MPI_Wait(&request2, &status2);
 
 			}
-			if ( (j) > NUM_BYTES) {
+			if(j > NUM_BYTES) {
 				real_length = (NUM_BYTES % chunk_size);
-			}else {
+			} else {
 				real_length = chunk_size;
 			}
 			MPI_Send(&buffer[j-chunk_size], real_length, MPI_BYTE, rank+1, 0, MPI_COMM_WORLD);
