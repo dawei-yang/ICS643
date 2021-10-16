@@ -120,6 +120,7 @@ int main(int argc, char *argv[])
 	// On rank 0 fill the buffer with random data 
 	if (0 == rank) { 
 		checksum = 0;
+		// buffer = "ABCDEFGHIJ";
 		srandom(RAND_SEED);
 		for (j = 0; j < NUM_BYTES; j++) {
 			buffer[j] = (char) (random() % 256); 
@@ -163,9 +164,11 @@ int main(int argc, char *argv[])
 	if(strcmp(bcast_implementation_name, "ring_bcast") == 0) {
 		if(rank == 0) {
 			MPI_Send(&buffer, 2, MPI_INT, rank+1, 1, MPI_COMM_WORLD);
+			// fprintf(stderr, "sent {%s} from [%d] to [%d]\n", buffer, rank, rank+1);
 		}
 		else {
 			MPI_Recv(&buffer, 2, MPI_INT, rank-1, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		// fprintf(stderr, "recv {%s} from [%d]\n", buffer, rank-1);
 			if(rank != num_procs-1)  MPI_Send(&buffer, 2, MPI_INT, rank+1, 1, MPI_COMM_WORLD);
 		}
 	}
@@ -197,6 +200,76 @@ int main(int argc, char *argv[])
 			}
 		}
 	}
+	if(strcmp(bcast_implementation_name, "asynchronous_pipelined_ring_bcast") == 0) {
+		MPI_Request request;
+		MPI_Status status;
+		MPI_Request request2;
+		MPI_Status status2;
+		int send_length;
+		if (argc >= 2) {
+			chunk_size = strtol(argv[2], NULL, 10);
+		}
+		if (rank == 0) {
+			for(int i=0; i<NUM_BYTES; i+=chunk_size) {
+				if ( (i+ chunk_size) > NUM_BYTES) {
+					send_length = (NUM_BYTES % chunk_size);
+				}else {
+					send_length = chunk_size;
+				}
+				MPI_Send(&buffer[i], send_length, MPI_BYTE, rank+1, 0, MPI_COMM_WORLD);
+			}
+	
+			// MPI_Isend(&buffer[5], 5, MPI_BYTE, rank+1, 0, MPI_COMM_WORLD, &request);
+		} else if(rank == (num_procs-1)) {
+			for( int i=0; i<NUM_BYTES; i=i+chunk_size) {
+				if ( (i+ chunk_size) > NUM_BYTES) {
+					send_length = (NUM_BYTES % chunk_size);
+				}else {
+					send_length = chunk_size;
+				}				
+				MPI_Recv(&buffer[i], send_length, MPI_BYTE, rank-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			}
+			
+			//MPI_Recv(&buffer[5], 5, MPI_BYTE, rank-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		}
+		
+		else {
+			int j;
+			MPI_Recv(&buffer[0], chunk_size, MPI_BYTE, rank-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			for(j=chunk_size; j<NUM_BYTES; j=j+chunk_size ) {
+				if ( (j+ chunk_size) > NUM_BYTES) {
+					send_length = (NUM_BYTES % chunk_size);
+				}else {
+					send_length = chunk_size;
+				}	
+				MPI_Isend(&buffer[j-chunk_size], chunk_size, MPI_BYTE, rank+1, 0, MPI_COMM_WORLD, &request);
+				MPI_Irecv(&buffer[j], send_length, MPI_BYTE, rank-1, 0, MPI_COMM_WORLD, &request2);
+				MPI_Wait(&request, &status);
+				MPI_Wait(&request2, &status2);
+
+			}
+
+/* 			MPI_Isend(&buffer[0], chunk_size, MPI_BYTE, rank+1, 0, MPI_COMM_WORLD, &request);
+			MPI_Recv(&buffer[2], chunk_size, MPI_BYTE, rank-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			MPI_Wait(&request, &status);
+			MPI_Isend(&buffer[2], chunk_size, MPI_BYTE, rank+1, 0, MPI_COMM_WORLD, &request);
+			MPI_Recv(&buffer[4], chunk_size, MPI_BYTE, rank-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			MPI_Wait(&request, &status);
+			MPI_Isend(&buffer[4], chunk_size, MPI_BYTE, rank+1, 0, MPI_COMM_WORLD, &request);
+			MPI_Recv(&buffer[6], chunk_size, MPI_BYTE, rank-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			MPI_Wait(&request, &status);
+			MPI_Isend(&buffer[6], chunk_size, MPI_BYTE, rank+1, 0, MPI_COMM_WORLD, &request);
+			MPI_Recv(&buffer[8], chunk_size, MPI_BYTE, rank-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			MPI_Wait(&request, &status); */
+			if ( (j) > NUM_BYTES) {
+				send_length = (NUM_BYTES % chunk_size);
+			}else {
+				send_length = chunk_size;
+			}
+			MPI_Send(&buffer[j-chunk_size], send_length, MPI_BYTE, rank+1, 0, MPI_COMM_WORLD);
+			// printf("J is [%d] Rank [%d] send last byte is [%c], length is [%d]\n", j, rank, buffer[NUM_BYTES-chunk_size], send_length);
+		}
+	}
 
 
 	/////////////////////////////////////////////////////////////////////////////
@@ -220,13 +293,22 @@ int main(int argc, char *argv[])
 		}
 	}
 	} else {
-		int checksum=0;
-		for (j = 0; j < NUM_BYTES; j++) {
-			checksum += buffer[j];
-		}
+	int checksum=0;
 
-		MPI_Send(&checksum, 1, MPI_INT, 0, 1, MPI_COMM_WORLD);
+/// Add debug stuff
+	//fprintf(stderr,"rank [%d]:\n",rank);
+	for (j = 0; j < NUM_BYTES; j++) {
+		checksum += buffer[j];
+		//fprintf(stderr,"%c", buffer[j]);
 	}
+	//fprintf(stderr,"\n");
+// debug stuff end
+
+
+	MPI_Send(&checksum, 1, MPI_INT, 0, 1, MPI_COMM_WORLD);
+	// fprintf(stderr,"send checksum [%d]; from [%d] to [0]\n", checksum, rank);
+	}
+
 	// Print out bcast implementation name and wall-clock time, only if the bcast was successful
 	MPI_Barrier(MPI_COMM_WORLD);
 	if ((0 == rank) && (all_ok)) {
@@ -238,5 +320,6 @@ int main(int argc, char *argv[])
 	// Clean-up
 	free(buffer);
 	MPI_Finalize();
+
 	return 0;
 }
