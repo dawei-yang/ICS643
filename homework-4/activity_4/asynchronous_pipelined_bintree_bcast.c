@@ -173,21 +173,7 @@ int main(int argc, char *argv[])
 			}
 		}
 		// leaves
-		else if(rank > ((num_procs/2)-1)){
-			for(int i=0; i<NUM_BYTES; i+=chunk_size) {
-				if(i+chunk_size > NUM_BYTES) {
-					actual_length = NUM_BYTES%chunk_size;
-				} else {
-					actual_length = chunk_size;
-				}
-				if(rank%2 != 0){
-					MPI_Recv(&buffer[i], actual_length, MPI_BYTE, (rank-1)/2, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-				} else {
-					MPI_Recv(&buffer[i], actual_length, MPI_BYTE, (rank-2)/2, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-				}
-			}
-		} else {
-		// others
+		else {
 			if(rank%2 != 0) {
 				MPI_Recv(&buffer[0], chunk_size, MPI_BYTE, (rank-1)/2, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);		
 			} else {
