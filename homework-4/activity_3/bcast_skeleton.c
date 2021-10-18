@@ -116,7 +116,6 @@ int main(int argc, char *argv[])
 		program_abort(argv[0],"Out of memory!");
 	}
 
-
 	// On rank 0 fill the buffer with random data 
 	if (0 == rank) { 
 		checksum = 0;
@@ -147,9 +146,12 @@ int main(int argc, char *argv[])
 
 	// #include "bcast_solution.c"
 
+	// default_bcast
 	if(strcmp(bcast_implementation_name, "default_bcast") == 0) {
 		MPI_Bcast(&buffer, 2, MPI_INT, 0, MPI_COMM_WORLD);
 	}
+
+	// naive_bcast
 	if(strcmp(bcast_implementation_name, "naive_bcast") == 0) {
 		if(rank == 0) {
 			for(int i = 1; i< num_procs; i++) {
@@ -159,6 +161,8 @@ int main(int argc, char *argv[])
 			MPI_Recv(&buffer, 2, MPI_INT, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 		}
 	}
+
+	// ring_bcast
 	if(strcmp(bcast_implementation_name, "ring_bcast") == 0) {
 		if(rank == 0) {
 			MPI_Send(&buffer, 2, MPI_INT, rank+1, 1, MPI_COMM_WORLD);
@@ -168,30 +172,85 @@ int main(int argc, char *argv[])
 			if(rank != num_procs-1)  MPI_Send(&buffer, 2, MPI_INT, rank+1, 1, MPI_COMM_WORLD);
 		}
 	}
+
+	// pipelined_ring_bcast
 	if(strcmp(bcast_implementation_name, "pipelined_ring_bcast") == 0) {
 		int remain = NUM_BYTES;
-	    int send_length;
+	    int actual_length;
 		chunk_size = strtol(argv[2], NULL, 10);
-		
+
 		if(rank == 0) {
 			for(int i=0; i<NUM_BYTES; i=i+chunk_size) {
-				if((i+chunk_size) > NUM_BYTES) {
-					send_length = (NUM_BYTES % chunk_size);
-				} else {
-					send_length = chunk_size;
+				if ( (i+ chunk_size) > NUM_BYTES) {
+					actual_length = (NUM_BYTES % chunk_size);
+				}else {
+					actual_length = chunk_size;
 				}
-				MPI_Send(&buffer[i], send_length, MPI_BYTE, rank+1, 3, MPI_COMM_WORLD);
+				MPI_Send(&buffer[i], actual_length, MPI_BYTE, rank+1, 3, MPI_COMM_WORLD);
 			}		
 		}else {
 			for(int j=0; j<NUM_BYTES; j=j+chunk_size) {
-				if((i+ chunk_size) > NUM_BYTES) {
-					send_length = (NUM_BYTES % chunk_size);
-				} else {
-					send_length = chunk_size;
+				if ( (i+ chunk_size) > NUM_BYTES) {
+					actual_length = (NUM_BYTES % chunk_size);
+				}else {
+					actual_length = chunk_size;
 				}
-				MPI_Recv(&buffer[j], send_length, MPI_BYTE, rank-1, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-				if(rank != (num_procs-1)) MPI_Send(&buffer[j], send_length, MPI_BYTE, rank+1, 3, MPI_COMM_WORLD);
+				MPI_Recv(&buffer[j], actual_length, MPI_BYTE, rank-1, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+				if(rank != (num_procs -1)) MPI_Send(&buffer[j], actual_length, MPI_BYTE, rank+1, 3, MPI_COMM_WORLD);
 			}
+		}
+	}
+
+	// asynchronous_pipelined_ring_bcast
+	if(strcmp(bcast_implementation_name, "asynchronous_pipelined_ring_bcast") == 0) {
+		MPI_Request request;
+		MPI_Status status;
+		MPI_Request request2;
+		MPI_Status status2;
+		int actual_length;
+		if (argc >= 2) {
+			chunk_size = strtol(argv[2], NULL, 10);
+		}
+		if (rank == 0) {
+			for(int i=0; i<NUM_BYTES; i+=chunk_size) {
+				if((i+chunk_size) > NUM_BYTES) {
+					actual_length = (NUM_BYTES % chunk_size);
+				} else {
+					actual_length = chunk_size;
+				}
+				MPI_Send(&buffer[i], actual_length, MPI_BYTE, rank+1, 0, MPI_COMM_WORLD);
+			}
+		} else if(rank == (num_procs-1)) {
+			for(int i=0; i<NUM_BYTES; i=i+chunk_size) {
+				if((i+ chunk_size) > NUM_BYTES) {
+					actual_length = (NUM_BYTES % chunk_size);
+				} else {
+					actual_length = chunk_size;
+				}				
+				MPI_Recv(&buffer[i], actual_length, MPI_BYTE, rank-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			}
+		}
+		else {
+			int j;
+			MPI_Recv(&buffer[0], chunk_size, MPI_BYTE, rank-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			for(j=chunk_size; j<NUM_BYTES; j=j+chunk_size ) {
+				if((j+ chunk_size) > NUM_BYTES) {
+					actual_length = (NUM_BYTES % chunk_size);
+				} else {
+					actual_length = chunk_size;
+				}	
+				MPI_Isend(&buffer[j-chunk_size], chunk_size, MPI_BYTE, rank+1, 0, MPI_COMM_WORLD, &request);
+				MPI_Irecv(&buffer[j], actual_length, MPI_BYTE, rank-1, 0, MPI_COMM_WORLD, &request2);
+				MPI_Wait(&request, &status);
+				MPI_Wait(&request2, &status2);
+
+			}
+			if(j > NUM_BYTES) {
+				actual_length = (NUM_BYTES % chunk_size);
+			} else {
+				actual_length = chunk_size;
+			}
+			MPI_Send(&buffer[j-chunk_size], actual_length, MPI_BYTE, rank+1, 0, MPI_COMM_WORLD);
 		}
 	}
 
@@ -220,16 +279,15 @@ int main(int argc, char *argv[])
 		for (j = 0; j < NUM_BYTES; j++) {
 			checksum += buffer[j];
 		}
-
 		MPI_Send(&checksum, 1, MPI_INT, 0, 1, MPI_COMM_WORLD);
 	}
 	// Print out bcast implementation name and wall-clock time, only if the bcast was successful
 	MPI_Barrier(MPI_COMM_WORLD);
 	if ((0 == rank) && (all_ok)) {
-	fprintf(stdout,"implementation: %s | chunksize: %d |  time: %.3lf seconds\n",
-			bcast_implementation_name, 
-			chunk_size,
-			MPI_Wtime() - start_time);
+		fprintf(stdout,"implementation: %s | chunksize: %d |  time: %.3lf seconds\n",
+				bcast_implementation_name, 
+				chunk_size,
+				MPI_Wtime() - start_time);
 	}
 	// Clean-up
 	free(buffer);
