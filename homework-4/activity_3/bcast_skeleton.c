@@ -148,28 +148,26 @@ int main(int argc, char *argv[])
 
 	// default_bcast
 	if(strcmp(bcast_implementation_name, "default_bcast") == 0) {
-		MPI_Bcast(&buffer, 2, MPI_INT, 0, MPI_COMM_WORLD);
+		MPI_Bcast(&buffer[0], NUM_BYTES, MPI_BYTE, 0, MPI_COMM_WORLD);
 	}
-
-	// naive_bcast
 	if(strcmp(bcast_implementation_name, "naive_bcast") == 0) {
 		if(rank == 0) {
 			for(int i = 1; i< num_procs; i++) {
-				MPI_Send(&buffer, 2, MPI_INT, i, 1, MPI_COMM_WORLD);
+				MPI_Send(&buffer[0], NUM_BYTES, MPI_BYTE, i, 1, MPI_COMM_WORLD);
 			}
 		}else {
-			MPI_Recv(&buffer, 2, MPI_INT, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			MPI_Recv(&buffer[0], NUM_BYTES, MPI_BYTE, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 		}
 	}
-
-	// ring_bcast
 	if(strcmp(bcast_implementation_name, "ring_bcast") == 0) {
 		if(rank == 0) {
-			MPI_Send(&buffer, 2, MPI_INT, rank+1, 1, MPI_COMM_WORLD);
+			MPI_Send(&buffer[0], NUM_BYTES, MPI_BYTE, rank+1, 1, MPI_COMM_WORLD);
+			// fprintf(stderr, "sent {%s} from [%d] to [%d]\n", buffer, rank, rank+1);
 		}
 		else {
-			MPI_Recv(&buffer, 2, MPI_INT, rank-1, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-			if(rank != num_procs-1)  MPI_Send(&buffer, 2, MPI_INT, rank+1, 1, MPI_COMM_WORLD);
+			MPI_Recv(&buffer[0], NUM_BYTES, MPI_BYTE, rank-1, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		// fprintf(stderr, "recv {%s} from [%d]\n", buffer, rank-1);
+			if(rank != num_procs-1)  MPI_Send(&buffer[0], NUM_BYTES, MPI_BYTE, rank+1, 1, MPI_COMM_WORLD);
 		}
 	}
 
