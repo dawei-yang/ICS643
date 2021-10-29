@@ -10,8 +10,7 @@
 #define C(x,y) ARRAY_C[(x)*(TILESIZE)+(y)]
 #define TA(x,y) TEMP_A[(x)*(TILESIZE)+(y)]
 #define TB(x,y) TEMP_B[(x)*(TILESIZE)+(y)]
-
-
+ 
 int main(int argc, char *argv[])
 {
 	int N;
@@ -34,6 +33,9 @@ int main(int argc, char *argv[])
 	int row_num = (int)(rank/p);
 	int col_num = rank%p;
 
+	double send_data = 0.0;
+	double recv_data = 0.0;
+
 	double *ARRAY_A = (double *)malloc(TILESIZE*TILESIZE*sizeof(double));
 	double *ARRAY_B = (double *)malloc(TILESIZE*TILESIZE*sizeof(double));
 	double *ARRAY_C = (double *)malloc(TILESIZE*TILESIZE*sizeof(double));
@@ -45,6 +47,7 @@ int main(int argc, char *argv[])
 		for(int j=0; j<TILESIZE; j++) {
 			A(i, j) = i+row_num*TILESIZE;
 			B(i, j) = i+row_num*TILESIZE+j+col_num*TILESIZE;
+			C(i, j) = 0;
 		}
 	}
 
@@ -54,6 +57,7 @@ int main(int argc, char *argv[])
 	MPI_Comm_split(MPI_COMM_WORLD, row_num, col_num, &new_comm_row);
 	MPI_Comm_split(MPI_COMM_WORLD, col_num+p, row_num, &new_comm_col);
 
+
 	for(int k = 0; k<=p-1; k++) {
 		// copy to temp 
 		for(int i=0; i<TILESIZE; i++) {
@@ -62,7 +66,6 @@ int main(int argc, char *argv[])
 				TB(i, j) = B(i, j);
 			}
 		}
-
 		// Boardcast A_?k OR B_k?
 		MPI_Bcast(TEMP_A, TILESIZE*TILESIZE, MPI_DOUBLE, k, new_comm_row);
 		MPI_Bcast(TEMP_B, TILESIZE*TILESIZE, MPI_DOUBLE, k, new_comm_col);
@@ -70,21 +73,45 @@ int main(int argc, char *argv[])
 
 		// calculate C
 		for(int i=0; i<TILESIZE; i++) {
-			for(int j=0; j<TILESIZE; j++) {
-				// printf("rank [%d]\t TA = %lf; TB = %lf\n", rank, TA(i, j), TB(i, j));
-				C(i, j) += TA(i, j)*TB(i, j);
+			for(int j=0; j<TILESIZE; j++) {	
+				for(int k=0; k<TILESIZE; k++) {
+					C(i, j) += TA(i, k)*TB(k, j);
+				}
 			}
+		}
+		// debugging
+/* 		printf("rank [%d] @k=%d\n", rank, k);
+		for(int i=0; i<TILESIZE; i++) {
+			for (int j=0; j<TILESIZE; j++) {
+				printf("%lf\t", TA(i, j));
+			}
+			printf("\n");
+		}
+		for(int i=0; i<TILESIZE; i++) {
+			for (int j=0; j<TILESIZE; j++) {
+				printf("%lf\t", TB(i, j));
+			}
+			printf("\n");
+		} */
+	}
+
+	// calculate sum of C for each process
+	for(int i=0; i<TILESIZE; i++) {
+		for(int j=0; j<TILESIZE; j++) {
+			send_data += C(i, j);
 		}
 	}
 
-	// calculate sum of C for evaluation
-	double sum = 0;
-	for(int i=0; i<TILESIZE; i++) {
-		for(int j=0; j<TILESIZE; j++) {
-			sum += C(i, j);
-		}
+	MPI_Reduce(&send_data, &recv_data, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+	// check the correctness in rank 0
+	if(rank == 0) {
+		double expected_sum = (pow(N, 3)*pow(N-1, 2))/2;
+		fprintf(stderr, "Expect sum of C is: %lf\n", expected_sum);
+		fprintf(stderr, "Result of MPI Reduce: %lf\n", recv_data);
+		if((expected_sum-recv_data) < 0.000000001) fprintf(stderr,"Multiplication Correct\n");
+		else fprintf(stderr,"Multiplication Incorrect\n");
 	}
-	printf("rank [%d] sum = %lf\n", rank, sum);
 
 	MPI_Comm_free(&new_comm_row);
 	MPI_Comm_free(&new_comm_col);
