@@ -20,7 +20,7 @@ static void program_abort(char *message) {
   exit(1);
 }
 
-static int isPerfective(int number) {
+static int isPerfectSquare(int number) {
 	int iVar;
     float fVar;
     fVar=sqrt((double)number);
@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 
-	if(isPerfective(num_procs) == 0) program_abort("Number of processes is not a perfect number\n");
+	if(isPerfectSquare(num_procs) == 0) program_abort("Number of processes is not a perfect number\n");
 	int p = (int)sqrt(num_procs);
 	if(N%p !=0) program_abort("square root of number of process does not divide N\n");
 
