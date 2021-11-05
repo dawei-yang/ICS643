@@ -64,8 +64,7 @@ int main(int argc, char *argv[])
 	double *ARRAY_A = (double *)malloc(TILESIZE*TILESIZE*sizeof(double));
 	double *ARRAY_B = (double *)malloc(TILESIZE*TILESIZE*sizeof(double));
 	double *ARRAY_C = (double *)malloc(TILESIZE*TILESIZE*sizeof(double));
-	double *TEMP_A = (double *)malloc(TILESIZE*TILESIZE*sizeof(double));
-	double *TEMP_B = (double *)malloc(TILESIZE*TILESIZE*sizeof(double));
+	double *TEMP_A, *TEMP_B;
 
 	// Initialize A, B, C
 	for(i=0; i<TILESIZE; i++) {
