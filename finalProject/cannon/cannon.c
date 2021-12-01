@@ -17,6 +17,15 @@ static void program_abort(char *message) {
   exit(1);
 }
 
+static int isPerfectSquare(int number) {
+	int iVar;
+    float fVar;
+    fVar=sqrt((double)number);
+    iVar=fVar;
+    if(iVar==fVar) return 1;
+    else return 0;
+}
+
 int main(int argc, char *argv[])
 {
     int N;
@@ -44,37 +53,27 @@ int main(int argc, char *argv[])
 
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-    dims[0] = 0;
-    dims[1] = 0;
+
+    if(isPerfectSquare(size) == 0) program_abort("Number of processes is not a perfect number\n");
+    int p = (int)sqrt(size);
+    dims[0] = p;
+    dims[1] = p;
     periods[0] = 1;
     periods[1] = 1;
+    int TILESIZE = N/p;
+	int row_num = rank/p;
+	int col_num = rank%p;
 
-    //create dims use dims to check if it is perfect square
-    MPI_Dims_create(size, 2, dims);
-    if (dims[0] != dims[1]) {
-        if (rank == 0)
-            printf("The number of processors must be a square.\n");
-        MPI_Finalize();
-        return 0;
-    }
-
-    int TILESIZE = N/dims[0];
-
-	int row_num = (int)(rank/dims[0]);
-	int col_num = rank%(dims[0]);
     A = (double *)malloc(TILESIZE * TILESIZE * sizeof(double));
     B = (double *)malloc(TILESIZE * TILESIZE * sizeof(double));
     C = (double *)malloc(TILESIZE * TILESIZE * sizeof(double));
 
-
-
-
     for (i = 0; i < TILESIZE; i++) {
         for (j = 0; j < TILESIZE; j++) {
-            //A[i * TILESIZE + j] = i + row_num * TILESIZE;
+            // use for test: for a 4x4: result should be 321,161
             A[i * TILESIZE + j] = rand()%100;
-            B[i * TILESIZE + j] = A[i * TILESIZE + j];
-
+            B[i * TILESIZE + j] = A[i * TILESIZE + j]; 
+            // A[i * TILESIZE + j] = i + row_num * TILESIZE;
             // B[i * TILESIZE + j] = i + row_num * TILESIZE + j + col_num * TILESIZE;
             C[i * TILESIZE + j] = 0.0;
         }
@@ -95,10 +94,9 @@ int main(int argc, char *argv[])
 	MPI_Cart_shift(cannon_comm, 0, coord[1], &up, &down);
 	MPI_Sendrecv_replace(&(B[0]), TILESIZE * TILESIZE, MPI_DOUBLE, up, 1, down, 1, cannon_comm, MPI_STATUS_IGNORE);
 
-
+    printf("rank [%d] => left shift [%d], up shift [%d]\n", rank, coord[0], coord[1]);
 
     // MPI Cartesian
-    
     MPI_Cart_shift(cannon_comm, 0, 1, &left, &right);
     MPI_Cart_shift(cannon_comm, 1, 1, &up, &down);
 
@@ -106,7 +104,7 @@ int main(int argc, char *argv[])
     // printf("rank [%d] at row [%d] col [%d]\n", rank, row_num, col_num);
 
     start = MPI_Wtime();
-    for (shift = 0; shift < dims[0]; shift++) {
+    for (shift = 0; shift < p; shift++) {
         // Matrix multiplication
         for (i = 0; i < TILESIZE; i++) {
             for (k = 0; k < TILESIZE; k++) {
