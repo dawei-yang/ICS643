@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
     MPI_Request request_A1, request_A2;
     int rank, size, shift, i, j, k;
     int dims[2];
-    int periods[2];
+    int periods[2], coord[2];
     int left, right, up, down;
     double *A, *B, *C;
     double start, end;
@@ -58,26 +58,52 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    int TILESIZE = N / dims[0];
+    int TILESIZE = N/dims[0];
 
 	int row_num = (int)(rank/dims[0]);
 	int col_num = rank%(dims[0]);
     A = (double *)malloc(TILESIZE * TILESIZE * sizeof(double));
     B = (double *)malloc(TILESIZE * TILESIZE * sizeof(double));
-    C = (double *)calloc(TILESIZE * TILESIZE, sizeof(double));
+    C = (double *)malloc(TILESIZE * TILESIZE * sizeof(double));
+
+
+
 
     for (i = 0; i < TILESIZE; i++) {
         for (j = 0; j < TILESIZE; j++) {
-            A[i * TILESIZE + j] = i + row_num * TILESIZE;
-            B[i * TILESIZE + j] = i + row_num * TILESIZE + j + col_num * TILESIZE;
+            //A[i * TILESIZE + j] = i + row_num * TILESIZE;
+            A[i * TILESIZE + j] = rand()%100;
+            B[i * TILESIZE + j] = A[i * TILESIZE + j];
+
+            // B[i * TILESIZE + j] = i + row_num * TILESIZE + j + col_num * TILESIZE;
             C[i * TILESIZE + j] = 0.0;
         }
     }
+	/* printf("Process Rank %d (coordinates: %d, %d), block of A: \n", rank, row_num, col_num);
+	for(i=0; i<TILESIZE; i++) {
+		for(j=0; j<TILESIZE; j++) {
+			printf("%.2lf\t", A[i * TILESIZE + j]);
+		}
+		printf("\n");
+	} */
 
-
+    // Initial skew
     MPI_Cart_create(MPI_COMM_WORLD, 2, dims, periods, 1, &cannon_comm);
+    MPI_Cart_coords(cannon_comm, rank, 2, coord);
+    MPI_Cart_shift(cannon_comm, 1, coord[0], &left, &right);
+    MPI_Sendrecv_replace(&(A[0]), TILESIZE * TILESIZE, MPI_DOUBLE, left, 1, right, 1, cannon_comm, MPI_STATUS_IGNORE);
+	MPI_Cart_shift(cannon_comm, 0, coord[1], &up, &down);
+	MPI_Sendrecv_replace(&(B[0]), TILESIZE * TILESIZE, MPI_DOUBLE, up, 1, down, 1, cannon_comm, MPI_STATUS_IGNORE);
+
+
+
+    // MPI Cartesian
+    
     MPI_Cart_shift(cannon_comm, 0, 1, &left, &right);
     MPI_Cart_shift(cannon_comm, 1, 1, &up, &down);
+
+    // printf("rank [%d] left %d, right %d, up %d, down %d\n", rank, left, right, up, down);
+    // printf("rank [%d] at row [%d] col [%d]\n", rank, row_num, col_num);
 
     start = MPI_Wtime();
     for (shift = 0; shift < dims[0]; shift++) {
