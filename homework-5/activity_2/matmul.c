@@ -97,6 +97,7 @@ int main(int argc, char *argv[])
 			for(j=0; j<TILESIZE; j++) {	
 				for(q=0; q<TILESIZE; q++) {
 					C(i, j) += TA(i, q)*TB(q, j);
+					printf("rank [%d], C[%d] = %lf\n", rank, i*TILESIZE+j, ARRAY_C[i * TILESIZE + j]);
 				}
 			}
 		}
@@ -114,6 +115,7 @@ int main(int argc, char *argv[])
 	// Result validation in rank 0
 	if(rank == 0) {
 		double expected_sum = (pow(N, 3)*pow(N-1, 2))/2;
+		printf("tilesize = %d\n", TILESIZE);
 		fprintf(stderr, "Expected sum of C: \t%lf\n", expected_sum);
 		fprintf(stderr, "Calculate sum of C: \t%lf\n", recv_data);
 		if(abs(expected_sum-recv_data) < 0.000000001) fprintf(stderr,"Multiplication Correct\n");

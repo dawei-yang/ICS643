@@ -4,8 +4,8 @@
 #include <mpi.h>
 #include <string.h>
 #include <math.h>
-#include <time.h>
 
+#define FLOP_CALIBRATION_FACTOR 22.250
 
 static void program_abort(char *message) {
   int my_rank;
@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
     int rank, size, step, i, j, k;
 
     double *A, *B, *C, *TmpA, *TmpB;
-    double start, end;
+    double start, end, start_1, end_1, start_2;
     double send_data = 0.0;
 	double recv_data = 0.0;
 
@@ -59,13 +59,10 @@ int main(int argc, char *argv[]) {
 	int row_num = rank/p;
 	int col_num = rank%p;
 
-    A = (double *)malloc(tile_size * tile_size * sizeof(double));
-    B = (double *)malloc(tile_size * tile_size * sizeof(double));
-    C = (double *)malloc(tile_size * tile_size * sizeof(double));
-    TmpA = (double *)malloc(tile_size * tile_size * sizeof(double));
-    TmpB = (double *)malloc(tile_size * tile_size * sizeof(double));
-
-
+    A = (double *)SMPI_SHARED_MALLOC(tile_size * tile_size * sizeof(double));
+    B = (double *)SMPI_SHARED_MALLOC(tile_size * tile_size * sizeof(double));
+    C = (double *)SMPI_SHARED_MALLOC(tile_size * tile_size * sizeof(double));
+    TmpA = (double *)SMPI_SHARED_MALLOC(tile_size * tile_size * sizeof(double));
 
     for (i = 0; i < tile_size; i++) {
         for (j = 0; j < tile_size; j++) {
@@ -89,31 +86,38 @@ int main(int argc, char *argv[]) {
     }
     for (step = 0; step < p; step++) {
 
-        // up shift B, nonblocking  
+        // up shift B, nonblocking
         for(i = 0; i < tile_size; i++) {
             for(j=0; j < tile_size; j++) {
-                // TmpB[i* tile_size + j] = B[i* tile_size + j];
                 TmpA[i* tile_size + j] = A[i* tile_size + j];
             }
         }
-
+        // MPI_Isend(&B, 2, MPI_INT, (row_num-1 + p)%p, 3, new_comm_col, &request_send);
         MPI_Isend(B, tile_size* tile_size, MPI_DOUBLE, (row_num-1 + p)%p, 3, new_comm_col, &request_send);
 
         // Broadcase Diagonal el -> row
+        // TmpA = A;
         int root = (step + row_num)%p;
-       
-        MPI_Bcast(TmpA, tile_size* tile_size, MPI_DOUBLE, root, new_comm_row);
-        
+        if(rank == 0 && step == 1) start_2 = MPI_Wtime();
+        //MPI_Bcast(&TmpA, 2, MPI_INT, root, new_comm_row);
+        MPI_Bcast(TmpA, tile_size*tile_size, MPI_DOUBLE, root, new_comm_row);
+        if(rank == 0 && step == 1) fprintf(stdout, "bcast time: %lf\n", MPI_Wtime() - start_2);
         // Matrix multiplication
-        for (i = 0; i < tile_size; i++) {
+        if (rank == 1 && step == 0) {start_1 = MPI_Wtime();}
+        double flops = (double)tile_size*(double)tile_size*(double)tile_size * (double)FLOP_CALIBRATION_FACTOR ;
+        SMPI_SAMPLE_FLOPS(flops){
+        /* for (i = 0; i < tile_size; i++) {
             for (k = 0; k < tile_size; k++) {
                 for (j = 0; j < tile_size; j++) {
                     C[i * tile_size + j] += TmpA[i * tile_size + k] * B[k * tile_size + j];
                 }
-            }
+            } */
         }
+        if (rank == 1 && step == 0) {printf("--> %lf\n", MPI_Wtime() - start_1);}
         // receive B
         MPI_Recv(B, tile_size* tile_size, MPI_DOUBLE, (row_num+1)%p, 3, new_comm_col, MPI_STATUS_IGNORE);
+        // MPI_Recv(&TmpB, 2, MPI_INT, (row_num+1)%p, 3, new_comm_col, MPI_STATUS_IGNORE);
+        // B = TmpB;
     }
 
     // calculate sum of C for each process
@@ -129,20 +133,19 @@ int main(int argc, char *argv[]) {
 	// Result validation in rank 0
 	if(rank == 0) {
 		double expected_sum = (pow(N, 3)*pow(N-1, 2))/2;
-        fprintf(stdout, "Time Elipsed: %lf\n", MPI_Wtime() - start);
+        fprintf(stdout, "Comm Time Elipsed: %lf\n", MPI_Wtime() - start);
 		fprintf(stderr, "Expected sum of C: \t%lf\n", expected_sum);
 		fprintf(stderr, "Calculate sum of C: \t%lf\n", recv_data);
 		if(abs(expected_sum-recv_data) < 0.000000001) fprintf(stderr,"Multiplication Correct\n");
 		else fprintf(stderr,"Multiplication Incorrect\n");
 	}
 
-    free(A);
-    free(B);
-    free(C);
-    free(TmpA);
-    free(TmpB);
-    MPI_Comm_free(&new_comm_col);
+    SMPI_SHARED_FREE(A);
+    SMPI_SHARED_FREE(B);
+    SMPI_SHARED_FREE(C);
+    SMPI_SHARED_FREE(TmpA);
     MPI_Comm_free(&new_comm_row);
+    MPI_Comm_free(&new_comm_col);
 
     MPI_Finalize();
     return 0;
